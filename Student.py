@@ -1,5 +1,4 @@
 import regex as re
-import SyllabusDB
 
 class Student:
     "Student Object Implementation"
