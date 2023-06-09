@@ -14,8 +14,29 @@ class Student:
         self._minor = None
         self._general_points = None
         self._sport_points = None
-        self._courses = list()  # list of the courses the student took, useful for priniting
+
+        self._internship_type = None   # holds the type of internship that the student chose
+     
+        # store the minimum points in order to complete
+        self._required_mandatory_points = None
+        self._required_major_points = None
+        self._required_minor_points = None
+        self._required_external_points = None
+
+
+        # calculate the amount of points the student got
+        self._total_points = 0
+        self._mandatory_points = 0
+        self._major_points = 0
+        self._minor_points = 0
+        self._external_points = 0
+
+        self._mandatory_courses = dict()  # key: course number, value: course object
+        self._speciality_courses = dict()  # key: course number, value: course object
         self._invalid_courses = dict()  # key: course, value: why course is invalid
+    
+
+
     
     def _open_db(self):
         f = open(self._file, "r", encoding="utf-8")
@@ -41,10 +62,25 @@ class Student:
 
 
     # TODO: maybe change the list to another data structure
-    # add a course object to the stduent's list of courses
-    def add_course(self, course):
-        self._courses.append(course)
+    # add a course object to the stduent's dict of mandatory courses
+    def add_mandatory_course(self, course):
+        self._mandatory_courses[course.get_number()] = course
         course.mark_as_done()
+
+    # add a course object to the stduent's dict of speciality courses
+    def add_speciality_course(self, course):
+        self._speciality_courses[course.get_number()] = course
+        course.mark_as_done()
+    
+    # add a course object to the stduent's dict of invlid courses
+    def add_invalid_course(self, course, message):
+        self._invalid_courses[course.get_number()] = message
+        course_number = course.get_number()
+        if course.is_mandatory():
+            self._mandatory_courses.pop(course_number)
+        else:
+            self._speciality_courses.pop(course_number)
+        
 
 
     def read_student_data(self):
@@ -68,9 +104,116 @@ class Student:
             course_number, credit, name = extract_course_data_from_line(line)
             course = self._syllabus_db.get_course_by_number(course_number)
             if course.validate_course(course_number, credit, name):
-                self.add_course(course)
+                if course.is_mandatory():
+                    self.add_mandatory_course(course)
+                else:
+                    self.add_speciality_course(course)  
             else:
                 self._invalid_courses[course] = "Course's data does not match Syllabus"
+
+
+    # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit  
+    def check_general_points(self):
+        if self._general_points == self._syllabus_db.get_general_points():
+            return True
+        return False
+   
+    # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit  
+    def check_total_points(self):
+        if self._total_points == self._syllabus_db.get_total_points():
+            return True
+        return False
+   
+    # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit  
+    def check_sport_points(self):
+        if self._sport_points == self._syllabus_db.get_sport_points():
+            return True
+        return False
+
+    # updates the type of internship that the student chose
+    def update_internship_type(self):
+        # check if project is internship in the idustry
+        if (31054 in self._mandatory_courses.keys()) and (31055 in self._mandatory_courses.keys()):
+            # if self._internship_type is None:
+            self._internship_type = "industry"
+       
+        # check if project is research in the college
+        elif (31052 in self._mandatory_courses.keys()) and (31053 in self._mandatory_courses.keys()):
+            # check if the project type had already updated, if so- the student did not report the project courses correctly        
+            # if self._internship_type is None:   
+            self._internship_type = "research"
+       
+        # check if project is mini_project in the college
+        elif (31050 in self._mandatory_courses.keys()) and (31051 in self._mandatory_courses.keys()):
+            # check if the project type had already updated, if so- the student did not report the project courses correctly
+            # if self._internship_type is None:
+            self._internship_type = "project"
+        else:
+            self._internship_type = "Invalid Project Type Selection"
+
+    
+
+
+    def update_mandatory_points(self, course):
+        for course in self._mandatory_courses.values():
+            if course.is_finished_properly():
+                        self._total_points += course.get_points()
+                        self._mandatory_points += course.get_points()
+            else:
+                # TODO: pop out an invalid course from self._courses dict
+                self.add_invalid_course(course, "Student did not finish one of the pre-courses")
+            
+
+    def update_speciality_points(self, course):
+        for course in self._speciality_courses.values():
+
+            if course.is_finished_properly():
+                        self._total_points += course.get_points()
+                        self._mandatory_points += course.get_points()
+            else:
+                # TODO: pop out an invalid course from self._courses dict
+                self.add_invalid_course(course, "Student did not finish one of the pre-courses")
+
+
+    def update_required_points(self):
+        req_mand, req_maj, req_min, req_ext = self._syllabus_db.get_required_points(self._internship_type)
+        self._required_mandatory_points = req_mand
+        self._required_major_points = req_maj
+        self._required_minor_points = req_min
+        self._required_external_points = req_ext
+
+
+
+    # check if the students is allowed to finish the degree 
+    def run_courses_check(self):
+        self.update_mandatory_points()
+        self.update_internship_type()
+        self.update_required_points()
+
+
+
+
+        # for course in self._courses:            
+        #     if course.is_mandatory():
+        #         self.update_mandatory_points(course)
+        #     else:   # course is a SpecialtyCourse
+        #         self._project_type = self.check_project_type()
+        #         if self._project_type is not "Invalid Project Type Selection":
+                    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def extract_course_data_from_line(line):
     line = line.strip()  # Remove leading/trailing whitespaces
