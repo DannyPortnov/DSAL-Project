@@ -34,9 +34,9 @@ class Student:
 
         self._mandatory_courses = dict()  # key: course number, value: course object
         self._speciality_courses = dict()  # key: course number, value: course object
-        self._major_courses = dict()  # key: course object, value: condition (choise, must or none)
-        self._minor_courses = dict()  # key: course object, value: condition (choise, must or none)
-        self._external_courses = dict()  # key: course object, value: condition (choise, must or none)
+        # self._major_courses = dict()  # key: course object, value: condition (choise, must or none)
+        # self._minor_courses = dict()  # key: course object, value: condition (choise, must or none)
+        # self._external_courses = dict()  # key: course object, value: condition (choise, must or none)
         self._invalid_courses = dict()  # key: course, value: why course is invalid
 
     # def _open_db(self):
@@ -74,20 +74,20 @@ class Student:
         self._speciality_courses[course.get_number()] = course
         course.mark_as_done()
 
-    # add a course object to the stduent's dict of speciality courses
-    def add_major_course(self, course):
-        self._major_courses[course.get_number()] = course
-        course.mark_as_done()
+    # # add a course object to the stduent's dict of speciality courses
+    # def add_major_course(self, course):
+    #     self._major_courses[course.get_number()] = course
+    #     course.mark_as_done()
   
-    # add a course object to the stduent's dict of speciality courses
-    def add_minor_course(self, course):
-        self._major_courses[course.get_number()] = course
-        course.mark_as_done()
+    # # add a course object to the stduent's dict of speciality courses
+    # def add_minor_course(self, course):
+    #     self._major_courses[course.get_number()] = course
+    #     course.mark_as_done()
   
-    # add a course object to the stduent's dict of speciality courses
-    def add_external_course(self, course):
-        self._major_courses[course.get_number()] = course
-        course.mark_as_done()
+    # # add a course object to the stduent's dict of speciality courses
+    # def add_external_course(self, course):
+    #     self._major_courses[course.get_number()] = course
+    #     course.mark_as_done()
     
     # add a course object to the stduent's dict of invlid courses
     def add_invalid_course(self, course, message):
@@ -176,15 +176,22 @@ class Student:
     def update_speciality_points(self, course):
         for course in self._speciality_courses.values():
             if course.is_finished_properly():
-                major_condition = course.get_condition_by_speciality(self._major)
-                minor_condition = course.get_condition_by_speciality(self._minor)
-                if major_condition == "Must":
-                    ""
-                elif major_condition == "Choise":
-                    ""
-                else:
-                    self._external_points += course.get_points()
-                    
+                if self._internship_type == "industry":
+                    major_condition = course.get_condition_by_speciality(self._major)
+                    if self._major_points < self._required_major_points:
+                        if major_condition == None:
+                            self._external_points += course.get_points()
+                        else:
+                            self._major_points += course.get_points()
+                    else:
+                        self._external_points += course.get_points()
+
+                elif self._internship_type == "research":
+                    pass
+                
+                # TODO: calculate points for other types of internships
+
+                # minor_condition = course.get_condition_by_speciality(self._minor)
 
                 self._total_points += course.get_points()
             else:
