@@ -1,6 +1,8 @@
 class Course:
     "Course Object Implementation"
 
+    # TODO: need to create str method to class course in order to print: number, points, name
+
     # def __init__(self, number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course):
     def __init__(self, number, points, name, is_must, pre_courses_list, parallel_course):
         self._name = name
@@ -13,20 +15,6 @@ class Course:
         self._is_done = False       # in order to check if a student took a course or not- default value is false
 
 
-    # # set the specialties condition: key = name ; value = must, choice or none
-    # def _set_specialties(self, computers, signals, devices):
-    #     specialties = dict()
-    #     # if self._is_must is False:
-    #     specialties["computers"] = number_to_condition(computers)
-    #     specialties["signals"] = number_to_condition(signals)
-    #     specialties["devices"] = number_to_condition(devices)
-    #     return specialties
-    #     # else:
-    #     #     specialties["computers"] = None
-    #     #     specialties["signals"] = None
-    #     #     specialties["devices"] = None
-    #     # raise TypeError('This Course Is Must, Not A Specialty')
-    
     # set a pre_course, key = pre_course's Course object
     def _set_pre_courses(self, pre_courses_list):
         if len(pre_courses_list):
@@ -44,11 +32,11 @@ class Course:
         self._is_done = True 
 
     # returns the condition of a course: must or choise
-    def check_if_must(self):
+    def is_mandatory(self):
         return self._is_must
 
     # returns course's status, if it was taken or not
-    def get_status(self):
+    def is_done(self):
         return self._is_done
  
     # returns course's points
@@ -59,22 +47,20 @@ class Course:
     def get_number(self):
         return self._number
     
-    # validate if the pre courses are finished
-    def validate_pre_courses(self):
+    # check if the pre courses are finished, this allows to determine if a course was finished properly
+    def is_finished_properly(self):
         if len(self._pre_courses):
             for course in self._pre_courses.keys():
-                if course.get_status() is False:
+                if course.is_done() is False:
                     return False
         return True
-        
+
     # validate a course by checking it's points, name and number
     def validate_course(self, number, points, name):
         if number is self._number and points is self._points and name is self._name:
             return True
-        
         return False
     
-
 
 
 

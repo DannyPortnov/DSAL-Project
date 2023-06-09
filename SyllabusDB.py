@@ -15,9 +15,9 @@ class SyllabusDB:
 
         self._total_points = 160
         self._mandatory_points = {"industry": 129, "research": 124, "project": 122}
-        self._major_points = {"industry": 20, "research": 0, "project": 11}
-        self._minor_points = {"industry": 20, "research": 10, "project": 6}
-        self._external_points = {"industry": 20, "research": 10, "project": 8}
+        self._major_points = {"industry": 20, "research": 20, "project": 20}
+        self._minor_points = {"industry": 0, "research": 10, "project": 10}
+        self._external_points = {"industry": 11, "research": 6, "project": 8}
         self._general_points = 6
         self._sport_points = 1
 
@@ -28,8 +28,19 @@ class SyllabusDB:
         header = f.readline().strip().split(',')
         return f, header
     
+
+    def get_general_points(self):
+        return self._general_points
+    
+    def get_total_points(self):
+        return self._total_points
+    
+    def get_sport_points(self):
+        return self._sport_points
+
+
     # get the amount of points for each course type, regarding the type of project
-    def get_relevant_points(self, final_project):
+    def get_required_points(self, final_project):
         return self._mandatory_points[final_project], self._major_points[final_project], \
                 self._minor_points[final_project], self._external_points[final_project]
 
@@ -44,7 +55,7 @@ class SyllabusDB:
                 course = Course(line[1], float(line[2]), line[3], line[4], get_pre_course_obj(line[8:12]), line[12])
                 self._mandatory_courses[course.get_points()] = course
             else:
-                course = SpecialityCourse(line[1], float(line[2]), line[3], line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), line[12])
+                course = SpecialityCourse(int(line[1]), float(line[2]), line[3], line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), line[12])
                 self._computers.add_course(course)
                 self._signals.add_course(course)
                 self._devices.add_course(course)
