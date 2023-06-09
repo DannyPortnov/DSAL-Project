@@ -19,9 +19,9 @@ class SpecialityCourse(Course):
         specialties["devices"] = number_to_condition(devices)
         return specialties
 
-
-    def get_speciality(self, name):
-        return self._specialties[name]
+    # returns if a course is Must, Choise or Not in the speciality
+    def get_condition_in_spetiality(self, speciality):
+        return self._specialties[speciality]
 
     # def get_computers(self):
     #     return self._computers
