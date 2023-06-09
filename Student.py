@@ -1,6 +1,5 @@
 from io import TextIOWrapper
 import regex as re
-import SyllabusDB
 
 class Student:
     "Student Object Implementation"
