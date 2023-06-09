@@ -17,16 +17,6 @@ class Student:
         self._courses = list()  # list of the courses the student took, useful for priniting
         self._invalid_courses = dict()  # key: course, value: why course is invalid
     
-    # def __init__(self, name, id):
-    # # def __init__(self, name, id, major, minor, general_points, sport_points):
-    #     self._name = name
-    #     self._id = id
-    #     self._major = major
-    #     self._minor = minor
-    #     self._general_points = general_points
-    #     self._sport_points = sport_points
-    #     self._courses = list()  # list of the courses the student took, useful for priniting
-
     def _open_db(self):
         f = open(self._file, "r", encoding="utf-8")
         return f
