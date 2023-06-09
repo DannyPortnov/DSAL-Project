@@ -4,7 +4,7 @@ class Course:
     # TODO: need to create str method to class course in order to print: number, points, name
 
     # def __init__(self, number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course):
-    def __init__(self, number, points, name, is_must, pre_courses_list, parallel_course):
+    def __init__(self, number, name, points, is_must, pre_courses_list, parallel_course):
         self._name = name
         self._number = number
         self._points = points
@@ -23,7 +23,7 @@ class Course:
     
     # set the condition of the course: must or choise
     def _set_condition(self, is_must):
-        if is_must:
+        if is_must == "חובה":
             self._is_must = True
         self._is_must = False
 

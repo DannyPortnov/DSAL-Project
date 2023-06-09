@@ -1,4 +1,4 @@
-class Speciality:
+class SpecialityCoursesDB:
     "Speciality Object Implementation"
 
     def __init__(self, name):

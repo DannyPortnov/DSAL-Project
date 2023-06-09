@@ -1,6 +1,6 @@
 import Course
 import SpecialityCourse
-import Speciality
+import SpecialityCoursesDB
 
 class SyllabusDB:
     "Syllabus Data base Object Implementation"
@@ -9,9 +9,9 @@ class SyllabusDB:
         self._file_name = file
         self._mandatory_courses = dict()     # key: course number, value: course object
         # self._final_project_courses = dict()  # holds the type of final project that are available
-        self._computers = Speciality("computers")
-        self._signals = Speciality("signals")
-        self._devices = Speciality("devices")
+        self._computers = SpecialityCoursesDB("computers")
+        self._signals = SpecialityCoursesDB("signals")
+        self._devices = SpecialityCoursesDB("devices")
 
         self._total_points = 160
         self._mandatory_points = {"industry": 129, "research": 124, "project": 122}
@@ -50,12 +50,12 @@ class SyllabusDB:
         while line:
             line = f.readline().strip().split(',')    # read course data to a list
             # number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course = extract_line(d)
-            # course = Course(number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course)
-            if line[4] is "1":
+            # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
+            if line[4] == "חובה":
                 course = Course(line[1], float(line[2]), line[3], line[4], get_pre_course_obj(line[8:12]), line[12])
                 self._mandatory_courses[course.get_points()] = course
             else:
-                course = SpecialityCourse(int(line[1]), float(line[2]), line[3], line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), line[12])
+                course = SpecialityCourse(int(line[1]), line[2], float(line[3]), line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), line[12])
                 self._computers.add_course(course)
                 self._signals.add_course(course)
                 self._devices.add_course(course)
