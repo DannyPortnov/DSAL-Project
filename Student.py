@@ -1,3 +1,4 @@
+from io import TextIOWrapper
 import regex as re
 import SyllabusDB
 
@@ -82,9 +83,6 @@ class Student:
             else:
                 self._invalid_courses[course] = "Course's data does not match Syllabus"
 
-
-
-
 def extract_course_data_from_line(line):
     line = line.strip()  # Remove leading/trailing whitespaces
     # Use regex to extract the course number, credit, and name
@@ -107,6 +105,11 @@ def extract_student_data_from_line(line):
     return field_value
 
 
-
-def ignore_comments(line):
-    pass
+def ignore_comments(file_path: str):
+    with open(file_path) as file:
+        lines = file.readlines()
+    for line in lines:
+        if not line.startswith("#"):
+            yield line
+    
+    
