@@ -44,7 +44,7 @@ class SyllabusDB:
         return self._mandatory_points[final_project], self._major_points[final_project], \
                 self._minor_points[final_project], self._external_points[final_project]
 
-
+    # TODO: ופגשאק DB creation to ignore the lines with the symbol: #
     def create_db(self):
         f, line = self._open_db()
         while line:
