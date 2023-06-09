@@ -1,0 +1,97 @@
+import Course
+import SpecialityCourse
+import Speciality
+
+class SyllabusDB:
+    "Syllabus Data base Object Implementation"
+
+    def __init__(self, file):
+        self._file_name = file
+        self._mandatory_courses = dict()     # key: course number, value: course object
+        # self._final_project_courses = dict()  # holds the type of final project that are available
+        self._computers = Speciality("computers")
+        self._signals = Speciality("signals")
+        self._devices = Speciality("devices")
+
+        self._total_points = 160
+        self._mandatory_points = {"industry": 129, "research": 124, "project": 122}
+        self._major_points = {"industry": 20, "research": 0, "project": 11}
+        self._minor_points = {"industry": 20, "research": 10, "project": 6}
+        self._external_points = {"industry": 20, "research": 10, "project": 8}
+        self._general_points = 6
+        self._sport_points = 1
+
+    
+    # open the csv file and read only the first line- header
+    def _open_db(self):
+        f = open(self._file, "r", encoding="utf-8")
+        header = f.readline().strip().split(',')
+        return f, header
+    
+    # get the amount of points for each course type, regarding the type of project
+    def get_relevant_points(self, final_project):
+        return self._mandatory_points[final_project], self._major_points[final_project], \
+                self._minor_points[final_project], self._external_points[final_project]
+
+
+    def create_db(self):
+        f, line = self._open_db()
+        while line:
+            line = f.readline().strip().split(',')    # read course data to a list
+            # number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course = extract_line(d)
+            # course = Course(number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course)
+            if line[4] is "1":
+                course = Course(line[1], float(line[2]), line[3], line[4], get_pre_course_obj(line[8:12]), line[12])
+                self._mandatory_courses[course.get_points()] = course
+            else:
+                course = SpecialityCourse(line[1], float(line[2]), line[3], line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), line[12])
+                self._computers.add_course(course)
+                self._signals.add_course(course)
+                self._devices.add_course(course)
+
+
+
+    def get_course_by_number(self, number):
+        if number in self._mandatory_courses.keys():
+            return self._mandatory_courses[number]
+        else:
+            print("Does not exist")
+        
+        course = self._computers.get_course(number)
+        if course is not None:
+            return course
+        
+        course = self._signals.get_course(number)
+        if course is not None:
+            return course
+        
+        course = self._devices.get_course(number)
+        if course is not None:
+            return course
+
+
+
+
+    # def set_name(self, name):
+    #     self._name = name
+
+    # def set_id(self, id):
+    #     self._id = id
+    
+    # def set_major(self, major):
+    #     self._major = major
+
+    # def set_minor(self, minor):
+    #     self._minor = minor
+   
+
+
+
+    # # TODO: maybe change the list to another data structure
+    # # add a course object to the stduent's list of courses
+    # def add_course(self, course):
+    #     self._courses.append(course)
+
+# need to get the pre_courses objects by using the pre courses list of strings
+def get_pre_course_obj(pre_courses_list):
+    pass
