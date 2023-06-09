@@ -108,6 +108,12 @@ class Student:
                 self._invalid_courses[course] = "Course's data does not match Syllabus"
 
 
+    def _ignore_comments(self, file: TextIOWrapper):
+            for line in file:
+                if not line.startswith("#"):
+                    yield line.strip()
+
+
   # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit  
     def check_sport_points(self):
         if self._sport_points == self._syllabus_db.get_sport_points():
