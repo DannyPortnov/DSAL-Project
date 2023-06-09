@@ -28,9 +28,9 @@ class Student:
     #     self._sport_points = sport_points
     #     self._courses = list()  # list of the courses the student took, useful for priniting
 
-    def _open_db(self):
-        f = open(self._file, "r", encoding="utf-8")
-        return f
+    # def _open_db(self):
+    #     f = open(self._file_name, "r", encoding="utf-8")
+    #     return f
 
     def set_name(self, name):
         self._name = name
@@ -58,29 +58,34 @@ class Student:
         course.mark_as_done()
 
     def read_student_data(self):
-        f = self._open_db()
-        first_comment = f.readline()
-        line = f.readline()
-        self.set_name(extract_student_data_from_line(line))
-        line = f.readline()
-        self.set_id(extract_student_data_from_line(line))
-        line = f.readline()
-        self.set_major(extract_student_data_from_line(line))
-        line = f.readline()
-        self.set_minor(extract_student_data_from_line(line))
-        line = f.readline()
-        self.set_general_points(extract_student_data_from_line(line))
-        line = f.readline()
-        self.set_sport_points(extract_student_data_from_line(line))
+        with open(self._file_name, "r", encoding="utf-8") as file:
+            line = next(self._ignore_comments(file))
+            self.set_name(extract_student_data_from_line(line))
+            line = next(self._ignore_comments(file))
+            self.set_id(extract_student_data_from_line(line))
+            line = next(self._ignore_comments(file))
+            self.set_major(extract_student_data_from_line(line))
+            line = next(self._ignore_comments(file))
+            self.set_minor(extract_student_data_from_line(line))
+            line = next(self._ignore_comments(file))
+            self.set_general_points(extract_student_data_from_line(line))
+            line = next(self._ignore_comments(file))
+            self.set_sport_points(extract_student_data_from_line(line))
 
-        while line:
-            line = f.readline()
-            course_number, credit, name = extract_course_data_from_line(line)
-            course = self._syllabus_db.get_course_by_number(course_number)
-            if course.validate_course(course_number, credit, name):
-                self.add_course(course)
-            else:
-                self._invalid_courses[course] = "Course's data does not match Syllabus"
+            while line:
+                line = next(self._ignore_comments(file))
+                course_number, credit, name = extract_course_data_from_line(
+                    line)
+                course = self._syllabus_db.get_course_by_number(course_number)
+                if course.validate_course(course_number, credit, name):
+                    self.add_course(course)
+                else:
+                    self._invalid_courses[course] = "Course's data does not match Syllabus"
+
+    def _ignore_comments(self, file: TextIOWrapper):
+        for line in file:
+            if not line.startswith("#"):
+                yield line.strip()
 
 
 def extract_course_data_from_line(line):
@@ -106,19 +111,11 @@ def extract_student_data_from_line(line):
     return field_value
 
 
-def ignore_comments(file_path: str):
-    with open(file_path) as file:
-        lines = file.readlines()
-    for line in lines:
-        if not line.startswith("#"):
-            yield line
-
-
 def test_ignoring_comments():
     student = Student("student1.txt", None)
     student.read_student_data()
     pass
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     test_ignoring_comments()
