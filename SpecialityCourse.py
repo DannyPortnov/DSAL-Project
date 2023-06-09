@@ -20,7 +20,7 @@ class SpecialityCourse(Course):
         return specialties
 
     # returns if a course is Must, Choise or Not in the speciality
-    def get_condition_in_spetiality(self, speciality):
+    def get_condition_by_speciality(self, speciality):
         return self._specialties[speciality]
 
     # def get_computers(self):
