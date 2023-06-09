@@ -33,9 +33,10 @@ class Student:
         self._external_points = 0
 
         self._mandatory_courses = dict()  # key: course number, value: course object
-        self._major_courses = dict()  # key: course number, value: course object
-        self._minor_courses = dict()  # key: course number, value: course object
-        self._external_courses = dict()  # key: course number, value: course object
+        self._speciality_courses = dict()  # key: course number, value: course object
+        self._major_courses = dict()  # key: course object, value: condition (choise, must or none)
+        self._minor_courses = dict()  # key: course object, value: condition (choise, must or none)
+        self._external_courses = dict()  # key: course object, value: condition (choise, must or none)
         self._invalid_courses = dict()  # key: course, value: why course is invalid
 
     # def _open_db(self):
@@ -64,6 +65,13 @@ class Student:
     # add a course object to the stduent's dict of mandatory courses
     def add_mandatory_course(self, course):
         self._mandatory_courses[course.get_number()] = course
+        course.mark_as_done()
+
+    # add a course object to the stduent's dict of speciality courses
+    def add_speciality_course(self, course):
+        # # check the condition of a course in speciality
+        # condition = course.get_condition_by_speciality(self._major)
+        self._speciality_courses[course.get_number()] = course
         course.mark_as_done()
 
     # add a course object to the stduent's dict of speciality courses
@@ -113,18 +121,7 @@ class Student:
                 course = self._syllabus_db.get_course_by_number(course_number)
                 if course.validate_course(course_number, credit, name):
                     if course.is_mandatory():
-                        
-                        # TODO: change the way we parse the file, assume that we read the mandatory courses first,
-                        # then the major, minor (if exist) and external
-
-                        # TODO: after finishing parsing the mandatory, update the internship type   
-                        # self.update_internship_type()
-                        # self.update_required_points()       
-                     
-                        # TODO: keep parsing specialization courses  
-
-                        self.add_mandatory_course(course)
-                        
+                        self.add_mandatory_course(course)  
                     else:
                         self.add_speciality_course(course)              
                 else:
@@ -178,10 +175,18 @@ class Student:
 
     def update_speciality_points(self, course):
         for course in self._speciality_courses.values():
-
             if course.is_finished_properly():
-                        self._total_points += course.get_points()
-                        self._mandatory_points += course.get_points()
+                major_condition = course.get_condition_by_speciality(self._major)
+                minor_condition = course.get_condition_by_speciality(self._minor)
+                if major_condition == "Must":
+                    ""
+                elif major_condition == "Choise":
+                    ""
+                else:
+                    self._external_points += course.get_points()
+                    
+
+                self._total_points += course.get_points()
             else:
                 # TODO: pop out an invalid course from self._courses dict
                 self.add_invalid_course(course, "Student did not finish one of the pre-courses")
