@@ -9,9 +9,9 @@ class SyllabusDB:
         self._file_name = file
         self._mandatory_courses = dict()     # key: course number, value: course object
         # self._final_project_courses = dict()  # holds the type of final project that are available
-        self._computers = SpecialityCoursesDB("computers")
-        self._signals = SpecialityCoursesDB("signals")
-        self._devices = SpecialityCoursesDB("devices")
+        self._computers = SpecialityCoursesDB("Computers")
+        self._signals = SpecialityCoursesDB("Signals")
+        self._devices = SpecialityCoursesDB("Devices")
 
         self._total_points = 160
         self._mandatory_points = {"industry": 129, "research": 124, "project": 122}
@@ -44,7 +44,7 @@ class SyllabusDB:
         return self._mandatory_points[final_project], self._major_points[final_project], \
                 self._minor_points[final_project], self._external_points[final_project]
 
-    # TODO: ופגשאק DB creation to ignore the lines with the symbol: #
+    # TODO: update DB creation to ignore the lines with the symbol: #
     def create_db(self):
         f, line = self._open_db()
         while line:
