@@ -38,6 +38,14 @@ class SyllabusDB:
     def get_sport_points(self):
         return self._sport_points
 
+    def get_speciality_by_name(self, speciality):
+        if self._computers.get_name() == speciality:
+            return self._computers
+        elif self._signals.get_name() == speciality:
+            return self._signals
+        elif self._devices.get_name() == speciality:
+            return self._devices
+
 
     # get the amount of points for each course type, regarding the type of project
     def get_required_points(self, final_project):
