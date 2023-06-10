@@ -1,11 +1,13 @@
 from Course import Course
+from Contants import Speciality
+import Contants
 
 
 class SpecialityCoursesDB:
     "Speciality Object Implementation"
 
-    def __init__(self, name):
-        self._name: str = name
+    def __init__(self, name: Speciality):
+        self._name: Speciality = name
         # key: course number, value: course object
         self._courses: dict[int, Course] = {}
         # self._must_courses = dict()      # key: course number, value: course object
@@ -23,7 +25,7 @@ class SpecialityCoursesDB:
         # elif course.get_speciality(self._name) == "Choise":
         #     self._choise_courses[course.get_number()] = course
 
-    def get_course(self, number):
+    def get_course(self, number: int):
         if number in self._courses.keys():
             return self._courses[number]
 
@@ -32,6 +34,4 @@ class SpecialityCoursesDB:
 
         # elif number in self._choise_courses.keys():
         #     return self._choise_courses[number]
-        else:
-            print("Does not exist")
-            return None
+        return None

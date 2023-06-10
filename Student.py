@@ -1,7 +1,11 @@
 from io import TextIOWrapper
+from typing import Generator
 import regex as re
 from Course import Course
 from SyllabusDB import SyllabusDB
+import Contants
+from Contants import Interships
+from unittest.mock import MagicMock
 
 
 class Student:
@@ -18,7 +22,7 @@ class Student:
         self._general_points: int = None
         self._sport_points: int = None
 
-        self._internship_type = None   # holds the type of internship that the student chose
+        self._internship_type:Interships = None   # holds the type of internship that the student chose
 
         # store the minimum points in order to complete
         self._required_mandatory_points: int = None
@@ -69,14 +73,14 @@ class Student:
     # add a course object to the stduent's dict of mandatory courses
     def add_mandatory_course(self, course: Course):
         self._mandatory_courses[course.get_number()] = course
-        course.mark_as_done()
+        course.mark_as_taken()
 
     # add a course object to the stduent's dict of speciality courses
     def add_speciality_course(self, course: Course):
         # # check the condition of a course in speciality
         # condition = course.get_condition_by_speciality(self._major)
         self._speciality_courses[course.get_number()] = course
-        course.mark_as_done()
+        course.mark_as_taken()
 
     # # add a course object to the stduent's dict of speciality courses
     # def add_major_course(self, course):
@@ -117,22 +121,43 @@ class Student:
             line = next(self._ignore_comments(file))
             self.set_sport_points(extract_student_data_from_line(line))
 
-            while line:
-                line = next(self._ignore_comments(file))
-                course_number, credit, name = extract_course_data_from_line(line)
-                course = self._syllabus_db.get_course_by_number(course_number)
-                if course.validate_course(course_number, credit, name):
-                    if course.is_mandatory():
-                        self.add_mandatory_course(course)
+            # When Generator depletes, next() returns None
+            while (line := next(self._ignore_comments(file))) != None:
+                # current_semester_courses: list[Course] = []
+                if (line.startswith("#") and Contants.SEMESTER_LINE_INDICATOR in line):  # Start of semester
+                    match = re.match(r'# סמסטר (\d+)', line)  # Extract semester number
+                    if match:
+                        semester_num = int(match.group(1))
+                    # if len(current_semester_courses) == 0:
+                    #     continue
+                    # for course in current_semester_courses:  # Validate parrallel courses
+                    #     if course.get_parallel_course() not in current_semester_courses:
+                    #         self._invalid_courses[course] = contants.format_parallel_course_error(course)
+
+                else:  # Begin reading semester's courses
+                    course_number, credit, name = extract_course_data_from_line(line)
+                    course = self._syllabus_db.get_course_by_number(course_number)
+                    course.set_semester_num(semester_num)
+                    if course.validate_course(course_number, credit, name):
+                        if course.is_mandatory():
+                            self.add_mandatory_course(course)
+                        else:
+                            self.add_speciality_course(course)
+                        # current_semester_courses.append(course)
                     else:
-                        self.add_speciality_course(course)
-                else:
-                    self._invalid_courses[course] = "Course's data does not match Syllabus"
+                        self._invalid_courses[course] = Contants.INVALID_COURSE_DATA_ERROR
 
     def _ignore_comments(self, file: TextIOWrapper):
         for line in file:
-            if not line.startswith("#"):
+            if (not line.startswith("#")) or (line.startswith("#") and Contants.SEMESTER_LINE_INDICATOR in line):
                 yield line.strip()
+
+    # def _resume_ignore_comments(self, file: Generator[str, None, None]):
+    #     for line in file:
+    #         if line.startswith("#") and contants.SEMESTER_LINE_INDICATOR in line:
+    #             yield True
+    #         elif not line.startswith("#"):
+    #             yield line.strip()
 
   # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit
 
@@ -146,46 +171,47 @@ class Student:
         # check if project is internship in the idustry
         if (31054 in self._mandatory_courses.keys()) and (31055 in self._mandatory_courses.keys()):
             # if self._internship_type is None:
-            self._internship_type = "industry"
+            self._internship_type = Interships.INDUSTRY
 
         # check if project is research in the college
         elif (31052 in self._mandatory_courses.keys()) and (31053 in self._mandatory_courses.keys()):
             # check if the project type had already updated, if so- the student did not report the project courses correctly
             # if self._internship_type is None:
-            self._internship_type = "research"
+            self._internship_type = Interships.RESEARCH
 
         # check if project is mini_project in the college
         elif (31050 in self._mandatory_courses.keys()) and (31051 in self._mandatory_courses.keys()):
             # check if the project type had already updated, if so- the student did not report the project courses correctly
             # if self._internship_type is None:
-            self._internship_type = "project"
+            self._internship_type = Interships.PROJECT
         else:
-            self._internship_type = "Invalid Project Type Selection"
+            self._internship_type = Interships.INVALID
 
     def update_mandatory_points(self, course: Course):
         for course in self._mandatory_courses.values():
-            if course.is_finished_properly():
+            is_finished, reason_if_not = course.is_finished_properly()
+            if is_finished:
                 self._total_points += course.get_points()
                 self._mandatory_points += course.get_points()
             else:
                 # TODO: pop out an invalid course from self._courses dict
-                self.add_invalid_course(
-                    course, "Student did not finish one of the pre-courses")
+                self.add_invalid_course(course, reason_if_not)
 
     def update_speciality_points(self, course: Course):
         for course in self._speciality_courses.values():
-            if course.is_finished_properly():
-                if self._internship_type == "industry":
+            is_finished, reason_if_not = course.is_finished_properly()
+            if is_finished:
+                if self._internship_type == Interships.INDUSTRY:
                     major_condition = course.get_condition_by_speciality(self._major)
                     if self._major_points < self._required_major_points:
-                        if major_condition == None:
+                        if major_condition is None:
                             self._external_points += course.get_points()
                         else:
                             self._major_points += course.get_points()
                     else:
                         self._external_points += course.get_points()
 
-                elif self._internship_type == "research":
+                elif self._internship_type == Interships.RESEARCH:
                     pass
 
                 # TODO: calculate points for other types of internships
@@ -194,9 +220,7 @@ class Student:
 
                 self._total_points += course.get_points()
             else:
-                # TODO: pop out an invalid course from self._courses dict
-                self.add_invalid_course(
-                    course, "Student did not finish one of the pre-courses")
+                self.add_invalid_course(course, reason_if_not)
 
     def update_required_points(self):
         req_mand, req_maj, req_min, req_ext = self._syllabus_db.get_required_points(
@@ -244,11 +268,14 @@ def extract_student_data_from_line(line: str):
     return field_value
 
 
-def test_ignoring_comments():
-    student = Student("student1.txt", None)
+def test_reading_student():
+    #syllabusDB = SyllabusDB("courses_fulllist.csv")
+    syllabusDB = MagicMock()
+    student = Student("student1.txt", syllabusDB)
     student.read_student_data()
+
     pass
 
 
 if __name__ == "__main__":
-    test_ignoring_comments()
+    test_reading_student()
