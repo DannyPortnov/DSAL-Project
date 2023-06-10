@@ -1,4 +1,5 @@
 import Course
+import re
 
 class SpecialityCourse(Course):
     "Course Object Implementation"
@@ -14,9 +15,9 @@ class SpecialityCourse(Course):
     # set the specialties condition: key = name ; value = must, choice or none
     def _set_specialities(self, computers, signals, devices):
         specialties = dict()
-        specialties["computers"] = number_to_condition(computers)
-        specialties["signals"] = number_to_condition(signals)
-        specialties["devices"] = number_to_condition(devices)
+        specialties["Computers"] = translate_condition(computers)
+        specialties["Signals"] = translate_condition(signals)
+        specialties["Devices"] = translate_condition(devices)
         return specialties
 
     # returns if a course is Must, Choise or Not in the speciality
@@ -32,11 +33,22 @@ class SpecialityCourse(Course):
     # def get_devices(self):
     #     return self._devices
 
+    # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+    def check_if_hw_sw(self):
+        pattern = r'\((חומרה|תוכנה)\)'
+        matches = re.findall(pattern, self._name)
+        if matches:
+            matched_words = ", ".join(matches)
+            return matched_words
+        else:
+            return None
+
+
 # function that converts a condition's value to an actual word
-def number_to_condition(num):
-    if num == 1:
+def translate_condition(hebrew_condition):
+    if hebrew_condition == "חובה":
         return "Must"
-    elif num == 2:
+    elif hebrew_condition == "בחירה":
         return "Choice"
     else:
         return None
