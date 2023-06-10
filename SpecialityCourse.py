@@ -3,9 +3,9 @@ import Course
 class SpecialityCourse(Course):
     "Course Object Implementation"
 
-    def __init__(self, number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course):
+    def __init__(self, number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course):
         
-        super().__init__(self, number, points, name, is_must, pre_courses_list, parallel_course)
+        super().__init__(self, number, name, points, is_must, pre_courses_list, parallel_course)
         self._specialities = self._set_specialities(computers, signals, devices)  # the specialties in which this course is available
         # self._computers = number_to_condition(computers)
         # self._signals = number_to_condition(signals)
