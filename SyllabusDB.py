@@ -60,10 +60,10 @@ class SyllabusDB:
             # number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course = extract_line(d)
             # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
             if line[4] == "חובה":
-                course = Course(int(line[1]), line[2], float(line[3]), line[4], get_pre_course_obj(line[8:12]), line[12])
+                course = Course(int(line[1]), line[2], float(line[3]), line[4], get_pre_course_obj(line[8:12]), self.get_course_by_number(line[12]))
                 self._mandatory_courses[course.get_points()] = course
             else:
-                course = SpecialityCourse(int(line[1]), line[2], float(line[3]), line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), line[12])
+                course = SpecialityCourse(int(line[1]), line[2], float(line[3]), line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), self.get_course_by_number(line[12]))
                 self._computers.add_course(course)
                 self._signals.add_course(course)
                 self._devices.add_course(course)
