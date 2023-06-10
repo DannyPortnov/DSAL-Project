@@ -17,9 +17,11 @@ class Course:
 
     # set a pre_course, key = pre_course's Course object
     def _set_pre_courses(self, pre_courses_list):
+        pre_courses = dict()
         if len(pre_courses_list):
             for course in pre_courses_list:
-                self._pre_courses[course] = None
+                pre_courses[course] = None
+        return pre_courses
     
     # set the condition of the course: must or choise
     def _set_condition(self, is_must):
