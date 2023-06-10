@@ -1,5 +1,5 @@
 from io import TextIOWrapper
-import regex as re
+import re
 
 
 class Student:
@@ -24,6 +24,10 @@ class Student:
         self._required_minor_points = None
         self._required_external_points = None
 
+        # TODO: maybe to change the way we store this data
+        # store the minimum number of "Must" courses the student need to take in major and minor specialities
+        self._required_major_must_courses = None
+        self._required_minor_must_courses = None
 
         # calculate the amount of points the student got
         self._total_points = 0
@@ -32,16 +36,41 @@ class Student:
         self._minor_points = 0
         self._external_points = 0
 
+        # count how many speciality "must" courses the student took
+        self._major_must_count = 0 
+        self._minor_must_count = 0 
+
+
+
         self._mandatory_courses = dict()  # key: course number, value: course object
         self._speciality_courses = dict()  # key: course number, value: course object
-        # self._major_courses = dict()  # key: course object, value: condition (choise, must or none)
-        # self._minor_courses = dict()  # key: course object, value: condition (choise, must or none)
-        # self._external_courses = dict()  # key: course object, value: condition (choise, must or none)
+        
+        # major courses only
+        self._major_must_courses_only = dict()  # key: course object, value: condition (choice, must or none)
+        self._major_choice_courses_only = dict()  # key: course object, value: condition (choice, must or none)
+       
+        # minor courses only
+        self._minor_must_courses_only = dict()  # key: course object, value: condition (choice, must or none)
+        self._minor_choice_courses_only = dict()  # key: course object, value: condition (choice, must or none)
+        
+        # Must course in major and in minor
+        self._major_must_minor_must_courses = dict()
+        
+        # major-must, minor-choice
+        self._major_must_minor_choice_courses = dict()
+
+        # major-choice, minor-must
+        self.minor_must_major_choice_courses = dict()
+
+        # courses that are available in both major and minor
+        self._major_minor_shared_courses = dict()  # courses the are shared between major and minor
+        
+        self._external_courses = dict()  # key: course object, value: condition (choice, must or none)
+        
         self._invalid_courses = dict()  # key: course, value: why course is invalid
 
-    # def _open_db(self):
-    #     f = open(self._file, "r", encoding="utf-8")
-    #     return f
+
+
 
     def set_name(self, name):
         self._name = name
@@ -51,9 +80,13 @@ class Student:
 
     def set_major(self, major):
         self._major = major
+        if major == "Computers":
+            self._major_must_count = {"תוכנה": 0, "חומרה": 0}
 
     def set_minor(self, minor):
         self._minor = minor
+        if minor == "Computers":
+            self._minor_must_count = {"תוכנה": 0, "חומרה": 0}
 
     def set_general_points(self, general_points):
         self._general_points = general_points
@@ -74,20 +107,6 @@ class Student:
         self._speciality_courses[course.get_number()] = course
         course.mark_as_done()
 
-    # # add a course object to the stduent's dict of speciality courses
-    # def add_major_course(self, course):
-    #     self._major_courses[course.get_number()] = course
-    #     course.mark_as_done()
-  
-    # # add a course object to the stduent's dict of speciality courses
-    # def add_minor_course(self, course):
-    #     self._major_courses[course.get_number()] = course
-    #     course.mark_as_done()
-  
-    # # add a course object to the stduent's dict of speciality courses
-    # def add_external_course(self, course):
-    #     self._major_courses[course.get_number()] = course
-    #     course.mark_as_done()
     
     # add a course object to the stduent's dict of invlid courses
     def add_invalid_course(self, course, message):
@@ -172,39 +191,298 @@ class Student:
                 # TODO: pop out an invalid course from self._courses dict
                 self.add_invalid_course(course, "Student did not finish one of the pre-courses")
             
+    # TODO: maybe do this when we read the student file
+    # first we need to sort the major and minor courses by the scpeciality course's condition
+    def sort_speciality_courses_by_condition(self):
+        for course in self._speciality_courses:
+            major_condition = course.get_condition_by_speciality(self._major)
+            minor_condition = course.get_condition_by_speciality(self._minor)
 
-    def update_speciality_points(self, course):
-        for course in self._speciality_courses.values():
+            if major_condition == "Must" and minor_condition == None:
+                self._major_must_courses_only[course] = major_condition 
+
+            elif major_condition == "Choice" and minor_condition == None:
+                self._major_choice_courses_only[course] = major_condition
+            
+            elif major_condition == None and minor_condition == "Must":
+                self._minor_must_courses_only[course] = minor_condition
+
+            elif major_condition == None and minor_condition == "Choice":
+                self._minor_choice_courses_only[course] = minor_condition
+
+            elif major_condition == "Must" and minor_condition == "Choice":
+                self._major_must_minor_choice_courses[course] = None     # TODO: mabye change it's value to something else
+
+            elif major_condition == "Choice" and minor_condition == "Must":
+                self.minor_must_major_choice_courses[course] = None     # TODO: mabye change it's value to something else
+            
+            elif major_condition == "Must" and minor_condition == "Must":
+                self._major_must_minor_must_courses[course] = None     # TODO: mabye change it's value to something else
+            
+            elif major_condition == "Choice" and minor_condition == "Choice":
+                self._major_minor_shared_courses[course] = None     # TODO: mabye change it's value to something else         
+            
+            elif major_condition == None and minor_condition == None:
+                self._external_courses[course] = None     # TODO: mabye change it's value to something else
+
+
+
+    #method for updating the student's point in speciality
+    def update_speciality_points(self):
+        # update MUST courses in major and minor
+        self.update_major_must_courses_only() #must in major
+
+        if self._internship_type == "research" or self._internship_type == "project":
+            self.update_minor_must_courses_only() #must in minor
+            self.update_major_must_minor_choice_courses()   #must in major
+            self.update_minor_must_major_choice_courses()   #must in minor
+            self.update_major_must_minor_must_courses()     #must in major or minor
+        
+        # update external points
+        self.update_external_points()
+
+        # update Choice courses in major only and minor only
+        self.update_major_choice_courses_only() #must in major
+        if self._internship_type == "research" or self._internship_type == "project":
+            self.update_minor_choice_courses_only() #must in minor
+
+        # at this point, we check the following requirements: 
+        # 1. we checked the "Must" courses requirements in major and minor and calculated it accordingly.
+        # 2. we calculated the "Choice" courses that are available in major only and minor only accordingly.
+        # 3. we calculated the courses that can fit only in external speciality
+        # 3. after those steps, we are left with the courses that can fit into each speciality: major/minor/external.
+        #    we will put the courses in such way that we calculated the points of each speciality and try to get to it's limit
+        # update points by using the courses that have left
+        self.update_major_minor_shared_courses_points()
+    
+
+    # method that updates the must course in computers speciality, with respect to it's kind: "חומרה" or "תוכנה"
+    # def update_major_minor_computers_must_points(self, course, must_count):
+    #     is_hw_sw = course.check_if_hw_sw()
+    #     if is_hw_sw is not None:
+    #         must_count[is_hw_sw] += 1
+    #     else:
+    #         must_count += 1
+    
+
+    # TODO: in each update major/minor/external course method, need to add:  else: self.add_invalid_course(...)
+    # this is for a situation when a course had not finished properly
+
+    # update the points of major's Must courses by using the courses that are available in the major only
+    def update_major_must_courses_only(self):
+        for course in self._major_must_courses_only:
             if course.is_finished_properly():
-                if self._internship_type == "industry":
-                    major_condition = course.get_condition_by_speciality(self._major)
-                    if self._major_points < self._required_major_points:
-                        if major_condition == None:
-                            self._external_points += course.get_points()
-                        else:
-                            self._major_points += course.get_points()
+                #     check if the course is MUST in Hardware or Software
+                #     update a counter for amount of HW/SW courses that was taken
+                # we can check if the course belongs to HW or SW by checking if it's name has the word: "חומרה" or "תוכנה"                
+                if self._major_points < self._required_major_points:
+                    if self._major == "Computers":
+                        # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                        is_hw_sw = course.check_if_hw_sw()
+                        if is_hw_sw is not None:
+                            self._major_must_count[is_hw_sw] += 1
+                        # else:
+                        #     self._major_must_count += 1
+                        # # self.update_major_minor_computers_must_points(course, self._major_must_count)
                     else:
-                        self._external_points += course.get_points()
+                        self._major_must_count += 1
+                    self._major_points += course.get_points()
+                # this course is available only in this speciality, if we exceed the number of points
+                # for this major, we will put the course in external_points
+                else:
+                    self._external_points += course.get_points()
 
-                elif self._internship_type == "research":
-                    pass
-                
-                # TODO: calculate points for other types of internships
+   
+    # update the points of minor's Must courses by using the courses that are available in the minor only
+    def update_minor_must_courses_only(self):
+        for course in self._minor_must_courses_only:
+            if course.is_finished_properly():
+                if self._minor_points < self._required_minor_points:
+                    if self._minor == "Computers":
+                        # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                        is_hw_sw = course.check_if_hw_sw()
+                        if is_hw_sw is not None:
+                            self._minor_must_count[is_hw_sw] += 1
+                        # else:
+                        #     self._minor_must_count += 1
+                        # self.update_major_minor_computers_must_points(course, self._minor_must_count)
+                    else:
+                        self._minor_must_count += 1
+                    self._minor_points += course.get_points()
+                # this course is available only in this speciality, if we exceed the number of points
+                # for this minor, we will put the course in external_points
+                else:
+                    self._external_points += course.get_points()
+   
+   
+    # update the major points if it doesn't have enough must courses
+    def update_major_must_minor_choice_courses(self):
+        for course in self._major_must_minor_choice_courses:
+            if course.is_finished_properly():
+                # major doesn't have enough must courses, and student didn't exceed amount of major points
+                if self._major == "Computers":
+                    is_hw_sw = course.check_if_hw_sw()
 
-                # minor_condition = course.get_condition_by_speciality(self._minor)
+                    # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                    
+                    if is_hw_sw is not None:
+                        #TODO: change the number to constant, computers need at least 2 HW and 2 SW courses if it's major
+                        if self._major_must_count[is_hw_sw] < 2 and self._major_points < self._required_major_points:
+                            self._major_must_count[is_hw_sw] += 1
+                            self._major_points += course.get_points()
+                        # major have enough must courses, we will decide later where to put this course by checking it's credit points
+                        else:
+                            self._major_minor_shared_courses[course] = None
+                else:
+                    if self._major_must_count < self._required_major_must_courses and self._major_points < self._required_major_points:
+                        self._major_must_count += 1
+                        self._major_points += course.get_points()
+                    # major have enough must courses, we will decide later where to put this course by checking it's credit points
+                    else:
+                        self._major_minor_shared_courses[course] = None
+              
 
-                self._total_points += course.get_points()
-            else:
-                # TODO: pop out an invalid course from self._courses dict
-                self.add_invalid_course(course, "Student did not finish one of the pre-courses")
+
+    # update the minor points if it doesn't have enough must courses
+    def update_minor_must_major_choice_courses(self):
+        for course in self.minor_must_major_choice_courses:
+            if course.is_finished_properly():
+                # minor doesn't have enough must courses, and student didn't exceed amount of minor points
+                if self._minor == "Computers":
+                    is_hw_sw = course.check_if_hw_sw()
+                    if is_hw_sw is not None:
+                        #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
+                        if self._minor_must_count[is_hw_sw] < 1 and self._minor_points < self._required_minor_points:
+                            self._minor_must_count[is_hw_sw] += 1
+                            self._minor_points += course.get_points()
+                        # major have enough must courses, we will decide later where to put this course by checking it's credit points
+                        else:
+                            self._major_minor_shared_courses[course] = None
+                else:
+                    if self._minor_must_count < self._required_minor_must_courses and self._minor_points < self._required_minor_points:
+                        self._minor_must_count += 1
+                        self._minor_points += course.get_points()
+                    # minor have enough must courses, we will decide later where to put this course by checking it's credit points
+                    else:
+                        self._major_minor_shared_courses[course] = None
 
 
-    def update_required_points(self):
+    # update major and minor points by checking if they have enough must courses.
+    def update_major_must_minor_must_courses(self):
+        for course in self._major_must_minor_must_courses:
+            if course.is_finished_properly():
+                # TODO: need to have another condition if it's computers speciality.
+                if self._major == "Computers":
+                    is_hw_sw = course.check_if_hw_sw()
+                    # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                    if is_hw_sw is not None:
+                        #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
+                        # major doesn't have enough must courses, minor does have
+                        if self._major_must_count[is_hw_sw] < 2 and self._minor_points >= self._required_minor_points:
+                            self._major_must_count[is_hw_sw] += 1
+                            self._major_points += course.get_points()
+                        # minor doesn't have enough must courses, major does have
+                        elif self._major_must_count[is_hw_sw] >= 2 and self._minor_points < self._required_minor_points:
+                            self._minor_must_count += 1
+                            self._minor_points += course.get_points()
+                        # major and minor have enough must courses, we will decide later 
+                        # where to put this course by checking it's credit points
+                        else:
+                            self._major_minor_shared_courses[course] = None
+
+                elif self._minor == "Computers":
+                    # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                    is_hw_sw = course.check_if_hw_sw()
+                    if is_hw_sw is not None:
+                        #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
+                        # major doesn't have enough must courses, minor does have                       
+                        if self._major_must_count < self._required_major_must_courses and self._minor_must_count[is_hw_sw] >= 1:
+                            self._major_must_count += 1
+                            self._major_points += course.get_points()
+                        # minor doesn't have enough must courses, major does have
+                        elif self._major_must_count >= self._required_major_must_courses and self._minor_must_count[is_hw_sw] < 1:
+                                self._minor_must_count[is_hw_sw] += 1
+                                self._minor_points += course.get_points()
+                        # major and minor have enough must courses, we will decide later 
+                        # where to put this course by checking it's credit points
+                        else:
+                            self._major_minor_shared_courses[course] = None
+              
+                else:
+                    # major doesn't have enough must courses, minor does have
+                    if self._major_must_count < self._required_major_must_courses and self._minor_must_count >= self._required_minor_must_courses:
+                        self._major_must_count += 1
+                        self._major_points += course.get_points()
+                    # minor doesn't have enough must courses, major does have
+                    elif self._major_must_count >= self._required_major_must_courses and self._minor_must_count < self._required_minor_must_courses:
+                        self._minor_must_count += 1
+                        self._minor_points += course.get_points()
+                    # minor and major doesn't have enough must courses, by default we will update the must course in the major
+                    elif self._major_must_count < self._required_major_must_courses and self._minor_must_count < self._required_minor_must_courses:
+                        self._minor_must_count += 1
+                        self._minor_points += course.get_points()
+                    # major and minor have enough must courses, we will decide later 
+                    # where to put this course by checking it's credit points
+                    else:
+                        self._major_minor_shared_courses[course] = None
+        
+
+
+    # update the points of major's Choice courses by using the courses that are available in the major only
+    def update_major_choice_courses_only(self):
+        for course in self._major_choice_courses_only:
+            if course.is_finished_properly():
+                    if self._major_points < self._required_major_points:
+                        self._major_points += course.get_points()
+                    # this course is available only in this speciality, if we exceed the number of points
+                    # for this major, we will put the course in external_points
+                    else:
+                        self._external_points += course.get_points()    
+
+
+    # update the points of minor's Choice courses by using the courses that are available in the minor only
+    def update_minor_choice_courses_only(self):
+        for course in self._minor_choice_courses_only:
+            if course.is_finished_properly():
+                if self._minor_points < self._required_minor_points:
+                    self._minor_points += course.get_points()
+                # this course is available only in this speciality, if we exceed the number of points
+                # for this minor, we will put the course in external_points
+                else:
+                    self._external_points += course.get_points()
+
+
+    # update the points of external speciality by using the courses that are not available in major and minor
+    def update_external_points(self):
+        for course in self._external_courses:
+            if course.is_finished_properly():
+                self._external_points += course.get_points()
+
+
+
+    # here we update points of major, minor and external specialities by using the rest of the courses that have left.
+    def update_major_minor_shared_courses_points(self):
+        for course in self._major_minor_shared_courses:
+            if course.is_finished_properly():
+                if self._major_points < self._required_major_points:
+                    self._major_points += course.get_points()
+                elif self._minor_points < self._required_minor_points:
+                    self._minor_points += course.get_points() 
+                else:
+                    self._external_points += course.get_points()
+
+
+
+
+    def update_required_data(self):
         req_mand, req_maj, req_min, req_ext = self._syllabus_db.get_required_points(self._internship_type)
+        req_min_must, req_maj_must = self._syllabus_db.get_required_speciality_must(self._internship_type)
         self._required_mandatory_points = req_mand
         self._required_major_points = req_maj
         self._required_minor_points = req_min
         self._required_external_points = req_ext
+        self._required_major_must_courses = req_maj_must
+        self._required_minor_must_courses = req_min_must
 
 
 
@@ -212,18 +490,12 @@ class Student:
     def run_courses_check(self):
         self.update_mandatory_points()
         self.update_internship_type()
-        self.update_required_points()
+        self.update_required_data()
+        self.sort_speciality_courses_by_condition()
+        self.update_speciality_points()
 
+        # TODO: need to check if the amount of points matches the requirements
 
-
-
-        # for course in self._courses:            
-        #     if course.is_mandatory():
-        #         self.update_mandatory_points(course)
-        #     else:   # course is a SpecialtyCourse
-        #         self._project_type = self.check_project_type()
-        #         if self._project_type is not "Invalid Project Type Selection":
-                    
 
 
 
