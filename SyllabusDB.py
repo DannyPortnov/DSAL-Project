@@ -18,6 +18,8 @@ class SyllabusDB:
         self._major_points = {"industry": 20, "research": 20, "project": 20}
         self._minor_points = {"industry": 0, "research": 10, "project": 10}
         self._external_points = {"industry": 11, "research": 6, "project": 8}
+        self._major_must_courses = {"industry": 4, "research": 4, "project": 4}
+        self._minor_must_courses = {"industry": 0, "research": 3, "project": 3}
         self._general_points = 6
         self._sport_points = 1
 
@@ -51,6 +53,9 @@ class SyllabusDB:
     def get_required_points(self, final_project):
         return self._mandatory_points[final_project], self._major_points[final_project], \
                 self._minor_points[final_project], self._external_points[final_project]
+    
+    def get_required_speciality_must(self, final_project):
+        return self._minor_must_courses[final_project], self._major_must_courses[final_project]
 
     # TODO: update DB creation to ignore the lines with the symbol: #
     def create_db(self):
@@ -63,6 +68,7 @@ class SyllabusDB:
                 course = Course(int(line[1]), line[2], float(line[3]), line[4], get_pre_course_obj(line[8:12]), self.get_course_by_number(line[12]))
                 self._mandatory_courses[course.get_points()] = course
             else:
+                # TODO: catch with regex the type of course in the speciality Computers: catch if belongs to HW or SW
                 course = SpecialityCourse(int(line[1]), line[2], float(line[3]), line[4], line[5], line[6], line[7], get_pre_course_obj(line[8:12]), self.get_course_by_number(line[12]))
                 self._computers.add_course(course)
                 self._signals.add_course(course)
