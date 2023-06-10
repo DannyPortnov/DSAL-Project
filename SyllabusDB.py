@@ -114,5 +114,5 @@ class SyllabusDB:
 # need to get the pre_courses objects by using the pre courses list of strings
 
 
-def get_pre_course_obj(pre_courses_list):
+def get_pre_course_obj(pre_courses_list) -> Course:
     pass
