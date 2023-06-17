@@ -1,28 +1,34 @@
 from io import TextIOWrapper
+from typing import Generator
 import re
+from Course import Course
+from SyllabusDB import SyllabusDB
+import Contants
+from Contants import Interships
+from unittest.mock import MagicMock
 
 
 class Student:
     "Student Object Implementation"
 
-    def __init__(self, file_name, syllabus_db):
+    def __init__(self, file_name: str, syllabus_db: SyllabusDB):
         # def __init__(self, name, id, major, minor, general_points, sport_points):
         self._file_name = file_name
         self._syllabus_db = syllabus_db
-        self._name = None
-        self._id = None
-        self._major = None
-        self._minor = None
-        self._general_points = None
-        self._sport_points = None
+        self._name: str = None
+        self._id: int = None
+        self._major: int = None
+        self._minor: int = None
+        self._general_points: int = None
+        self._sport_points: int = None
 
-        self._internship_type = None   # holds the type of internship that the student chose
-     
+        self._internship_type:Interships = None   # holds the type of internship that the student chose
+
         # store the minimum points in order to finish the degree
-        self._required_mandatory_points = None
-        self._required_major_points = None
-        self._required_minor_points = None
-        self._required_external_points = None
+        self._required_mandatory_points: int = None
+        self._required_major_points: int = None
+        self._required_minor_points: int = None
+        self._required_external_points: int = None
 
         # TODO: maybe to change the way we store this data
         # store the minimum number of "Must" courses the student need to take in major and minor specialities
@@ -30,11 +36,11 @@ class Student:
         self._required_minor_must_courses = None
 
         # calculate the amount of points the student got
-        self._total_points = 0
-        self._mandatory_points = 0
-        self._major_points = 0
-        self._minor_points = 0
-        self._external_points = 0
+        self._total_points: int = 0
+        self._mandatory_points: int = 0
+        self._major_points: int = 0
+        self._minor_points: int = 0
+        self._external_points: int = 0
 
         # count how many speciality "must" courses the student took
         self._major_must_count = 0 
@@ -42,8 +48,10 @@ class Student:
 
 
 
-        self._mandatory_courses = dict()  # key: course number, value: course object
-        self._speciality_courses = dict()  # key: course number, value: course object
+        # key: course number, value: course object
+        self._mandatory_courses: dict[int, Course] = {}
+        # key: course number, value: course object
+        self._speciality_courses: dict[int, Course] = {}
         
         # major courses only
         self._major_must_courses_only = dict()  # key: course object, value: condition (choice, must or none)
@@ -67,7 +75,8 @@ class Student:
         
         self._external_courses = dict()  # key: course object, value: condition (choice, must or none)
         
-        self._invalid_courses = dict()  # key: course, value: why course is invalid
+        # key: course, value: why course is invalid
+        self._invalid_courses: dict[Course, str] = dict()
 
 
 
@@ -96,28 +105,26 @@ class Student:
 
     # TODO: maybe change the list to another data structure
     # add a course object to the stduent's dict of mandatory courses
-    def add_mandatory_course(self, course):
+    def add_mandatory_course(self, course: Course):
         self._mandatory_courses[course.get_number()] = course
-        course.mark_as_done()
+        course.mark_as_taken()
 
     # add a course object to the stduent's dict of speciality courses
-    def add_speciality_course(self, course):
+    def add_speciality_course(self, course: Course):
         # # check the condition of a course in speciality
         # condition = course.get_condition_by_speciality(self._major)
         self._speciality_courses[course.get_number()] = course
-        course.mark_as_done()
+        course.mark_as_taken()
 
     
     # add a course object to the stduent's dict of invlid courses
-    def add_invalid_course(self, course, message):
+    def add_invalid_course(self, course: Course, message: str):
         self._invalid_courses[course.get_number()] = message
         course_number = course.get_number()
         if course.is_mandatory():
             self._mandatory_courses.pop(course_number)
         else:
             self._speciality_courses.pop(course_number)
-        
-
 
     def read_student_data(self):
         with open(self._file_name, "r", encoding="utf-8") as file:
@@ -134,26 +141,46 @@ class Student:
             line = next(self._ignore_comments(file))
             self.set_sport_points(extract_student_data_from_line(line))
 
-            while line:
-                line = next(self._ignore_comments(file))
-                course_number, credit, name = extract_course_data_from_line(line)
-                course = self._syllabus_db.get_course_by_number(course_number)
-                if course.validate_course(course_number, credit, name):
-                    if course.is_mandatory():
-                        self.add_mandatory_course(course)  
-                    else:
-                        self.add_speciality_course(course)              
-                else:
-                    self._invalid_courses[course] = "Course's data does not match Syllabus"
+            # When Generator depletes, next() returns None
+            while (line := next(self._ignore_comments(file))) != None:
+                # current_semester_courses: list[Course] = []
+                if (line.startswith("#") and Contants.SEMESTER_LINE_INDICATOR in line):  # Start of semester
+                    match = re.match(r'# סמסטר (\d+)', line)  # Extract semester number
+                    if match:
+                        semester_num = int(match.group(1))
+                    # if len(current_semester_courses) == 0:
+                    #     continue
+                    # for course in current_semester_courses:  # Validate parrallel courses
+                    #     if course.get_parallel_course() not in current_semester_courses:
+                    #         self._invalid_courses[course] = contants.format_parallel_course_error(course)
 
+                else:  # Begin reading semester's courses
+                    course_number, credit, name = extract_course_data_from_line(line)
+                    course = self._syllabus_db.get_course_by_number(course_number)
+                    course.set_semester_num(semester_num)
+                    if course.validate_course(course_number, credit, name):
+                        if course.is_mandatory():
+                            self.add_mandatory_course(course)
+                        else:
+                            self.add_speciality_course(course)
+                        # current_semester_courses.append(course)
+                    else:
+                        self._invalid_courses[course] = Contants.INVALID_COURSE_DATA_ERROR
 
     def _ignore_comments(self, file: TextIOWrapper):
-            for line in file:
-                if not line.startswith("#"):
-                    yield line.strip()
+        for line in file:
+            if (not line.startswith("#")) or (line.startswith("#") and Contants.SEMESTER_LINE_INDICATOR in line):
+                yield line.strip()
 
+    # def _resume_ignore_comments(self, file: Generator[str, None, None]):
+    #     for line in file:
+    #         if line.startswith("#") and contants.SEMESTER_LINE_INDICATOR in line:
+    #             yield True
+    #         elif not line.startswith("#"):
+    #             yield line.strip()
 
-  # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit  
+  # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit
+
     def check_sport_points(self):
         if self._sport_points == self._syllabus_db.get_sport_points():
             return True
@@ -164,32 +191,31 @@ class Student:
         # check if project is internship in the idustry
         if (31054 in self._mandatory_courses.keys()) and (31055 in self._mandatory_courses.keys()):
             # if self._internship_type is None:
-            self._internship_type = "industry"
-       
+            self._internship_type = Interships.INDUSTRY
+
         # check if project is research in the college
         elif (31052 in self._mandatory_courses.keys()) and (31053 in self._mandatory_courses.keys()):
-            # check if the project type had already updated, if so- the student did not report the project courses correctly        
-            # if self._internship_type is None:   
-            self._internship_type = "research"
-       
+            # check if the project type had already updated, if so- the student did not report the project courses correctly
+            # if self._internship_type is None:
+            self._internship_type = Interships.RESEARCH
+
         # check if project is mini_project in the college
         elif (31050 in self._mandatory_courses.keys()) and (31051 in self._mandatory_courses.keys()):
             # check if the project type had already updated, if so- the student did not report the project courses correctly
             # if self._internship_type is None:
-            self._internship_type = "project"
+            self._internship_type = Interships.PROJECT
         else:
-            self._internship_type = "Invalid Project Type Selection"
+            self._internship_type = Interships.INVALID
 
-    
-
-    def update_mandatory_points(self, course):
+    def update_mandatory_points(self, course: Course):
         for course in self._mandatory_courses.values():
-            if course.is_finished_properly():
+            is_finished, reason_if_not = course.is_finished_properly()
+            if is_finished:
                 self._total_points += course.get_points()
                 self._mandatory_points += course.get_points()
             else:
                 # TODO: pop out an invalid course from self._courses dict
-                self.add_invalid_course(course, "Student did not finish one of the pre-courses")
+                self.add_invalid_course(course, reason_if_not)
             
     # TODO: maybe do this when we read the student file
     # first we need to sort the major and minor courses by the scpeciality course's condition
@@ -455,9 +481,12 @@ class Student:
     # update the points of external speciality by using the courses that are not available in major and minor
     def update_external_points(self):
         for course in self._external_courses:
-            if course.is_finished_properly():
+            is_finished, reason_if_not = course.is_finished_properly()
+            if is_finished:
                 self._external_points += course.get_points()
-
+                self._total_points += course.get_points()
+            else:
+                self.add_invalid_course(course, reason_if_not)
 
 
     # here we update points of major, minor and external specialities by using the rest of the courses that have left.
@@ -470,6 +499,7 @@ class Student:
                     self._minor_points += course.get_points() 
                 else:
                     self._external_points += course.get_points()
+
 
 
 
@@ -542,11 +572,7 @@ class Student:
 
 
 
-
-
-
-
-def extract_course_data_from_line(line):
+def extract_course_data_from_line(line: str):
     line = line.strip()  # Remove leading/trailing whitespaces
     # Use regex to extract the course number, credit, and name
     match = re.match(r'^(\d+)\s+([\d.]+)\s+(.+)$', line)
@@ -560,7 +586,7 @@ def extract_course_data_from_line(line):
     return course_number, credit, name
 
 
-def extract_student_data_from_line(line):
+def extract_student_data_from_line(line: str):
     line = line.strip()  # Remove leading/trailing whitespaces
     # Use regex to extract the field name and its value while ignoring text after '#'
     match = re.match(r'([^:]+):\s*([^#]*)', line)
@@ -569,11 +595,14 @@ def extract_student_data_from_line(line):
     return field_value
 
 
-def test_ignoring_comments():
-    student = Student("student1.txt", None)
+def test_reading_student():
+    #syllabusDB = SyllabusDB("courses_fulllist.csv")
+    syllabusDB = MagicMock()
+    student = Student("student1.txt", syllabusDB)
     student.read_student_data()
+
     pass
 
 
 if __name__ == "__main__":
-    test_ignoring_comments()
+    test_reading_student()

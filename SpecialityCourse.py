@@ -1,13 +1,15 @@
-import Course
+from Course import Course
 import re
+
 
 class SpecialityCourse(Course):
     "Speciality Course Object Implementation"
 
     def __init__(self, number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course):
-        
+
         super().__init__(self, number, name, points, is_must, pre_courses_list, parallel_course)
-        self._specialities = self._set_specialities(computers, signals, devices)  # the specialties in which this course is available
+        # the specialties in which this course is available
+        self._specialities = self._set_specialities(computers, signals, devices)
         # self._computers = number_to_condition(computers)
         # self._signals = number_to_condition(signals)
         # self._devices = number_to_condition(devices)
@@ -26,10 +28,10 @@ class SpecialityCourse(Course):
 
     # def get_computers(self):
     #     return self._computers
-    
+
     # def get_signals(self):
     #     return self._signals
-    
+
     # def get_devices(self):
     #     return self._devices
 
