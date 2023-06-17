@@ -378,6 +378,7 @@ class Student:
                     is_hw_sw = course.check_if_hw_sw()
                     if is_hw_sw is not None:
                         #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
+                        #TODO: NEED TO CHECK ALSO IF REACHED TO 3 MUST COURSES IN MINOR
                         if self._minor_must_count[is_hw_sw] < 1 and self._minor_points < self._required_minor_points:
                             self._minor_must_count[is_hw_sw] += 1
                             self._minor_points += course.get_points()
@@ -421,7 +422,8 @@ class Student:
                     is_hw_sw = course.check_if_hw_sw()
                     if is_hw_sw is not None:
                         #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
-                        # major doesn't have enough must courses, minor does have                       
+                        # major doesn't have enough must courses, minor does have   
+                        #TODO: NEED TO CHECK ALSO IF REACHED TO 3 MUST COURSES IN MINOR                    
                         if self._major_must_count < self._required_major_must_courses and self._minor_must_count[is_hw_sw] >= 1:
                             self._major_must_count += 1
                             self._major_points += course.get_points()
@@ -493,12 +495,17 @@ class Student:
     def update_major_minor_shared_courses_points(self):
         for course in self._major_minor_shared_courses:
             if course.is_finished_properly():
-                if self._major_points < self._required_major_points:
-                    self._major_points += course.get_points()
-                elif self._minor_points < self._required_minor_points:
-                    self._minor_points += course.get_points() 
-                else:
-                    self._external_points += course.get_points()
+                # TODO: check where to put a course in consideration of its points.
+                course_points = course.get_points()
+                # if (self._required_major_points - (self._major_points + course_points)) > (self._required_minor_points - (self._minor_points + course_points)):
+                    # self._major_points += course_points
+
+                if self._major_points + course_points < self._required_major_points:
+                    self._major_points += course_points
+                elif self._minor_points + course_points < self._required_minor_points:
+                    self._minor_points += course_points
+                elif self._external_points + course_points < self._required_external_points:
+                    self._external_points += course_points
 
 
 
