@@ -1,6 +1,5 @@
 from Course import Course
-from Contants import Speciality
-import Contants
+from Constants import *
 
 
 class SpecialityCoursesDB:
@@ -20,7 +19,7 @@ class SpecialityCoursesDB:
         if course.get_speciality(self._name) is None:
             self._courses[course.get_number()] = course
 
-        # if course.get_speciality(self._name) == "Must":
+        # if course.get_speciality(self._name) == SpecialityCourseType.MUST:
         #     self._must_courses[course.get_number()] = course
         # elif course.get_speciality(self._name) == "Choise":
         #     self._choise_courses[course.get_number()] = course

@@ -3,10 +3,9 @@ from typing import Generator
 import re
 from Course import Course
 from SyllabusDB import SyllabusDB
-import Constants
-from Constants import Interships
+from Constants import *
 from unittest.mock import MagicMock
-
+from SpecialityCourse import SpecialityCourse
 
 class Student:
     "Student Object Implementation"
@@ -31,7 +30,7 @@ class Student:
         self._required_external_points: int = None
 
         # TODO: maybe to change the way we store this data
-        # store the minimum number of "Must" courses the student need to take in major and minor specialities
+        # store the minimum number of required courses the student need to take in major and minor specialities
         self._required_major_must_courses = None
         self._required_minor_must_courses = None
 
@@ -42,16 +41,16 @@ class Student:
         self._minor_points: int = 0
         self._external_points: int = 0
 
-        # count how many speciality "must" courses the student took
-        self._major_must_count = 0 
-        self._minor_must_count = 0 
+        # count how many required speciality courses the student took
+        self._major_must_count = {}
+        self._minor_must_count = {}
 
 
 
         # key: course number, value: course object
         self._mandatory_courses: dict[int, Course] = {}
         # key: course number, value: course object
-        self._speciality_courses: dict[int, Course] = {}
+        self._speciality_courses: dict[int, SpecialityCourse] = {}
         
         # major courses only
         self._major_must_courses_only = dict()  # key: course object, value: condition (choice, must or none)
@@ -78,9 +77,6 @@ class Student:
         # key: course, value: why course is invalid
         self._invalid_courses: dict[Course, str] = dict()
 
-
-
-
     def set_name(self, name):
         self._name = name
 
@@ -89,13 +85,13 @@ class Student:
 
     def set_major(self, major):
         self._major = major
-        if major == "Computers":
-            self._major_must_count = {"תוכנה": 0, "חומרה": 0}
+        if major == Speciality.COMPUTERS:
+            self._major_must_count = {ComputersSpecialityRequiredCourseType.SW: 0, ComputersSpecialityRequiredCourseType.HW: 0}
 
     def set_minor(self, minor):
         self._minor = minor
-        if minor == "Computers":
-            self._minor_must_count = {"תוכנה": 0, "חומרה": 0}
+        if minor == Speciality.COMPUTERS:
+            self._minor_must_count = {ComputersSpecialityRequiredCourseType.SW: 0, ComputersSpecialityRequiredCourseType.HW: 0}
 
     def set_general_points(self, general_points):
         self._general_points = general_points
@@ -128,6 +124,7 @@ class Student:
 
     def read_student_data(self):
         with open(self._file_name, "r", encoding="utf-8") as file:
+            # TODO: Put all of this in __init__
             line = next(self._ignore_comments(file))
             self.set_name(extract_student_data_from_line(line))
             line = next(self._ignore_comments(file))
@@ -144,7 +141,7 @@ class Student:
             # When Generator depletes, next() returns None
             while (line := next(self._ignore_comments(file))) != None:
                 # current_semester_courses: list[Course] = []
-                if (line.startswith("#") and Constants.SEMESTER_LINE_INDICATOR in line):  # Start of semester
+                if (line.startswith("#") and SEMESTER_LINE_INDICATOR in line):  # Start of semester
                     match = re.match(r'# סמסטר (\d+)', line)  # Extract semester number
                     if match:
                         semester_num = int(match.group(1))
@@ -165,11 +162,11 @@ class Student:
                             self.add_speciality_course(course)
                         # current_semester_courses.append(course)
                     else:
-                        self._invalid_courses[course] = Constants.INVALID_COURSE_DATA_ERROR
+                        self._invalid_courses[course] = INVALID_COURSE_DATA_ERROR
 
     def _ignore_comments(self, file: TextIOWrapper):
         for line in file:
-            if (not line.startswith("#")) or (line.startswith("#") and Constants.SEMESTER_LINE_INDICATOR in line):
+            if (not line.startswith("#")) or (line.startswith("#") and SEMESTER_LINE_INDICATOR in line):
                 yield line.strip()
 
     # def _resume_ignore_comments(self, file: Generator[str, None, None]):
@@ -219,33 +216,33 @@ class Student:
             
     # TODO: maybe do this when we read the student file
     # first we need to sort the major and minor courses by the scpeciality course's condition
-    def sort_speciality_courses_by_condition(self):
-        for course in self._speciality_courses:
+    def sort_speciality_courses_by_condition(self) -> None:
+        for course in self._speciality_courses.values():
             major_condition = course.get_condition_by_speciality(self._major)
             minor_condition = course.get_condition_by_speciality(self._minor)
 
-            if major_condition == "Must" and minor_condition == None:
+            if major_condition == SpecialityCourseType.MUST and minor_condition == None:
                 self._major_must_courses_only[course] = major_condition 
 
-            elif major_condition == "Choice" and minor_condition == None:
+            elif major_condition == SpecialityCourseType.CHOISE and minor_condition == None:
                 self._major_choice_courses_only[course] = major_condition
             
-            elif major_condition == None and minor_condition == "Must":
+            elif major_condition == None and minor_condition == SpecialityCourseType.MUST:
                 self._minor_must_courses_only[course] = minor_condition
 
-            elif major_condition == None and minor_condition == "Choice":
+            elif major_condition == None and minor_condition == SpecialityCourseType.CHOISE:
                 self._minor_choice_courses_only[course] = minor_condition
 
-            elif major_condition == "Must" and minor_condition == "Choice":
+            elif major_condition == SpecialityCourseType.MUST and minor_condition == SpecialityCourseType.CHOISE:
                 self._major_must_minor_choice_courses[course] = None     # TODO: mabye change it's value to something else
 
-            elif major_condition == "Choice" and minor_condition == "Must":
+            elif major_condition == SpecialityCourseType.CHOISE and minor_condition == SpecialityCourseType.MUST:
                 self.minor_must_major_choice_courses[course] = None     # TODO: mabye change it's value to something else
             
-            elif major_condition == "Must" and minor_condition == "Must":
+            elif major_condition == SpecialityCourseType.MUST and minor_condition == SpecialityCourseType.MUST:
                 self._major_must_minor_must_courses[course] = None     # TODO: mabye change it's value to something else
             
-            elif major_condition == "Choice" and minor_condition == "Choice":
+            elif major_condition == SpecialityCourseType.CHOISE and minor_condition == SpecialityCourseType.CHOISE:
                 self._major_minor_shared_courses[course] = None     # TODO: mabye change it's value to something else         
             
             elif major_condition == None and minor_condition == None:
@@ -258,7 +255,7 @@ class Student:
         # update MUST courses in major and minor
         self.update_major_must_courses_only() #must in major
 
-        if self._internship_type == "research" or self._internship_type == "project":
+        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
             self.update_minor_must_courses_only() #must in minor
             self.update_major_must_minor_choice_courses()   #must in major
             self.update_minor_must_major_choice_courses()   #must in minor
@@ -269,12 +266,12 @@ class Student:
 
         # update Choice courses in major only and minor only
         self.update_major_choice_courses_only() #must in major
-        if self._internship_type == "research" or self._internship_type == "project":
+        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
             self.update_minor_choice_courses_only() #must in minor
 
         # at this point, we check the following requirements: 
-        # 1. we checked the "Must" courses requirements in major and minor and calculated it accordingly.
-        # 2. we calculated the "Choice" courses that are available in major only and minor only accordingly.
+        # 1. we checked the required courses requirements in major and minor and calculated it accordingly.
+        # 2. we calculated the optional courses that are available in major only and minor only accordingly.
         # 3. we calculated the courses that can fit only in external speciality
         # 3. after those steps, we are left with the courses that can fit into each speciality: major/minor/external.
         #    we will put the courses in such way that we calculated the points of each speciality and try to get to it's limit
@@ -282,7 +279,7 @@ class Student:
         self.update_major_minor_shared_courses_points()
     
 
-    # method that updates the must course in computers speciality, with respect to it's kind: "חומרה" or "תוכנה"
+    # method that updates the must course in computers speciality, with respect to it's kind: Hardware or Software
     # def update_major_minor_computers_must_points(self, course, must_count):
     #     is_hw_sw = course.check_if_hw_sw()
     #     if is_hw_sw is not None:
@@ -300,10 +297,10 @@ class Student:
             if course.is_finished_properly():
                 #     check if the course is MUST in Hardware or Software
                 #     update a counter for amount of HW/SW courses that was taken
-                # we can check if the course belongs to HW or SW by checking if it's name has the word: "חומרה" or "תוכנה"                
+                # we can check if the course belongs to HW or SW by checking if it's name has the word: "ComputersSpecialityRequiredCoursesTypes.HW" or "ComputersSpecialityRequiredCoursesTypes.SW"                
                 if self._major_points < self._required_major_points:
-                    if self._major == "Computers":
-                        # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                    if self._major == Speciality.COMPUTERS:
+                        # we need to assume that each computers' course name's indicate if it's HW or SW
                         is_hw_sw = course.check_if_hw_sw()
                         if is_hw_sw is not None:
                             self._major_must_count[is_hw_sw] += 1
@@ -324,8 +321,8 @@ class Student:
         for course in self._minor_must_courses_only:
             if course.is_finished_properly():
                 if self._minor_points < self._required_minor_points:
-                    if self._minor == "Computers":
-                        # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                    if self._minor == Speciality.COMPUTERS:
+                        # we need to assume that each computers' course name's indicate if it's HW or SW
                         is_hw_sw = course.check_if_hw_sw()
                         if is_hw_sw is not None:
                             self._minor_must_count[is_hw_sw] += 1
@@ -346,10 +343,10 @@ class Student:
         for course in self._major_must_minor_choice_courses:
             if course.is_finished_properly():
                 # major doesn't have enough must courses, and student didn't exceed amount of major points
-                if self._major == "Computers":
+                if self._major == Speciality.COMPUTERS:
                     is_hw_sw = course.check_if_hw_sw()
 
-                    # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                    # we need to assume that each computers' course name's indicate if it's HW or SW
                     
                     if is_hw_sw is not None:
                         #TODO: change the number to constant, computers need at least 2 HW and 2 SW courses if it's major
@@ -374,7 +371,7 @@ class Student:
         for course in self.minor_must_major_choice_courses:
             if course.is_finished_properly():
                 # minor doesn't have enough must courses, and student didn't exceed amount of minor points
-                if self._minor == "Computers":
+                if self._minor == Speciality.COMPUTERS:
                     is_hw_sw = course.check_if_hw_sw()
                     if is_hw_sw is not None:
                         #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
@@ -399,9 +396,9 @@ class Student:
         for course in self._major_must_minor_must_courses:
             if course.is_finished_properly():
                 # TODO: need to have another condition if it's computers speciality.
-                if self._major == "Computers":
+                if self._major == Speciality.COMPUTERS:
                     is_hw_sw = course.check_if_hw_sw()
-                    # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                    # we need to assume that each computers' course name's indicate if it's HW or SW
                     if is_hw_sw is not None:
                         #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
                         # major doesn't have enough must courses, minor does have
@@ -417,8 +414,8 @@ class Student:
                         else:
                             self._major_minor_shared_courses[course] = None
 
-                elif self._minor == "Computers":
-                    # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
+                elif self._minor == Speciality.COMPUTERS:
+                    # we need to assume that each computers' course name's indicate if it's HW or SW
                     is_hw_sw = course.check_if_hw_sw()
                     if is_hw_sw is not None:
                         #TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
@@ -569,11 +566,11 @@ class Student:
         # if self._required_minor_points < self._minor_points:
         
         # if self._required_external_points < self._external_points:
-        #         # count how many speciality "must" courses the student took
+        #         # count how many required speciality courses the student took
                     #         self._major_must_count = 0 
                     #         self._minor_must_count = 0 
 
-        #         # store the minimum number of "Must" courses the student need to take in major and minor specialities
+        #         # store the minimum number of required courses the student need to take in major and minor specialities
                     #         self._required_major_must_courses = None
                     #         self._required_minor_must_courses = None   
 

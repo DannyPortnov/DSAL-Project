@@ -3,7 +3,6 @@
 from Course import Course
 from enum import StrEnum  # Assuming you have Python 3.11 or higher
 
-
 class Interships(StrEnum):
     INVALID = 'invalid',
     INDUSTRY = 'industry',
@@ -16,6 +15,19 @@ class Speciality(StrEnum):
     SIGNALS = 'signals',
     DEVICES = 'devices'
 
+class SpecialityCourseType(StrEnum):
+    INVALID = 'invalid',
+    MUST = 'Must',
+    CHOISE = 'Choise',
+
+class ComputersSpecialityRequiredCourseType(StrEnum):
+    INVALID = 'invalid',
+    HW = 'חומרה',
+    SW = 'תוכנה',
+
+REQUIRED_COURSE_INDICATOR = "חובה"
+
+CHOISE_COURSE_INDICATOR = "בחירה"
 
 SEMESTER_LINE_INDICATOR = "סמסטר"
 

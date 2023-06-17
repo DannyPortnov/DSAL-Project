@@ -1,5 +1,6 @@
 from __future__ import annotations  # for self reference
-import Contants
+from Constants import *
+from Constants import format_parallel_course_error
 
 
 class Course:
@@ -16,7 +17,8 @@ class Course:
         # is the course's condition must or choice
         self._set_condition(is_must)  # Sets self._is_must
         # hold the pre-courses that must be taken before this course
-        self._pre_courses = self._set_pre_courses(pre_courses_list)
+        self._pre_courses: dict[Course, None] = {}
+        self._set_pre_courses(pre_courses_list)
         # self._specialties = self._set_specialties(computers, signals, devices)  # the specialties in which this course is available
         self._parallel_course = parallel_course
         self._semester_num: int = None  # the semester in which this course was taken
@@ -37,15 +39,14 @@ class Course:
     # set a pre_course, key = pre_course's Course object
 
     def _set_pre_courses(self, pre_courses_list: list[Course] | None):
-        pre_courses = dict()
-        if pre_courses_list != None and len(pre_courses_list):
+        if pre_courses_list is not None and len(pre_courses_list):
             for course in pre_courses_list:
-                pre_courses[course] = None
-        return pre_courses
+                self._pre_courses[course] = None
 
     # set the condition of the course: must or choise
+
     def _set_condition(self, is_must: str):
-        if is_must == "חובה":
+        if is_must == REQUIRED_COURSE_INDICATOR:
             self._is_must = True
         self._is_must = False
 
@@ -73,14 +74,14 @@ class Course:
         """Checks if all the pre courses and the parrallel course were taken, 
         this allows to determine if a course was finished properly"""
         if len(self._pre_courses):
-            for course in self._pre_courses.keys():
-                if course.is_done() is False:
-                    return False, Contants.format_pre_course_error(self, course)
+            for course in self._pre_courses:
+                if course.was_taken() is False:
+                    return False, format_pre_course_error(self, course)
         # Check if the parallel course was taken in the same semester
         if self._parallel_course is not None:
             if self._parallel_course.was_taken() is False \
                     or self._parallel_course.get_semester_num() != self._semester_num:
-                return False, Contants.format_parallel_course_error(self, self._parallel_course)
+                return False, format_parallel_course_error(self, self._parallel_course)
         return True
 
     # validate a course by checking it's points, name and number
@@ -96,8 +97,8 @@ class Course:
 # function that converts a condition's value to an actual word
 def number_to_condition(num: int):
     if num == 1:
-        return "Must"
+        return SpecialityCourseType.MUST
     elif num == 2:
-        return "Choice"
+        return SpecialityCourseType.CHOISE
     else:
         return None

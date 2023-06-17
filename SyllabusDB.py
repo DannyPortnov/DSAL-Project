@@ -1,8 +1,7 @@
 from Course import Course
 import SpecialityCourse
 from SpecialityCoursesDB import SpecialityCoursesDB
-import Contants
-from Contants import Interships, Speciality
+from Constants import *
 
 
 class SyllabusDB:
@@ -26,8 +25,10 @@ class SyllabusDB:
             Interships.INDUSTRY: 0, Interships.RESEARCH: 10, Interships.PROJECT: 10}
         self._external_points: dict[Interships, int] = {
             Interships.INDUSTRY: 11, Interships.RESEARCH: 6, Interships.PROJECT: 8}
-        self._major_must_courses = {"industry": 4, "research": 4, "project": 4}
-        self._minor_must_courses = {"industry": 0, "research": 3, "project": 3}
+        self._major_must_courses = {Interships.INDUSTRY: 4,
+                                    Interships.RESEARCH: 4, Interships.PROJECT: 4}
+        self._minor_must_courses = {Interships.INDUSTRY: 0,
+                                    Interships.RESEARCH: 3, Interships.PROJECT: 3}
         self._general_points = 6
         self._sport_points = 1
         self.create_db()  # automatically create the DB when the object is created
@@ -58,10 +59,10 @@ class SyllabusDB:
 
     # get the amount of points for each course type, regarding the type of project
 
-    def get_required_points(self, final_project: str):
+    def get_required_points(self, final_project: Interships):
         return self._mandatory_points[final_project], self._major_points[final_project], \
-                self._minor_points[final_project], self._external_points[final_project]
-    
+            self._minor_points[final_project], self._external_points[final_project]
+
     def get_required_speciality_must(self, final_project):
         return self._minor_must_courses[final_project], self._major_must_courses[final_project]
 
@@ -72,7 +73,7 @@ class SyllabusDB:
             line = f.readline().strip().split(',')    # read course data to a list
             # number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course = extract_line(d)
             # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
-            if line[4] == "חובה":
+            if line[4] == REQUIRED_COURSE_INDICATOR:
                 course = Course(number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
                                 pre_courses_list=get_pre_course_obj(line[8:12]),
                                 parallel_course=self.get_course_by_number(line[12]))
@@ -109,7 +110,7 @@ class SyllabusDB:
         if course is not None:
             return course
 
-        raise ValueError(Contants.COURSE_NUMBER_NOT_FOUND_ERROR)
+        raise ValueError(COURSE_NUMBER_NOT_FOUND_ERROR)
 
     # def set_name(self, name):
     #     self._name = name
