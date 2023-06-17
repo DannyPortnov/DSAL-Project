@@ -2,7 +2,7 @@ import Course
 import re
 
 class SpecialityCourse(Course):
-    "Course Object Implementation"
+    "Speciality Course Object Implementation"
 
     def __init__(self, number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course):
         

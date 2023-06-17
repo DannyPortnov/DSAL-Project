@@ -18,7 +18,7 @@ class Student:
 
         self._internship_type = None   # holds the type of internship that the student chose
      
-        # store the minimum points in order to complete
+        # store the minimum points in order to finish the degree
         self._required_mandatory_points = None
         self._required_major_points = None
         self._required_minor_points = None
@@ -485,6 +485,36 @@ class Student:
         self._required_minor_must_courses = req_min_must
 
 
+    # check if student has enough mandatory points
+    # TODO: maybe change the parameters that this method returns
+    def validate_mandatory_points(self):
+        if self._required_mandatory_points <= self._mandatory_points:
+            return True
+        return False
+    
+    # check if student has enough external points
+    # TODO: maybe change the parameters that this method returns
+    def validate_external_points(self):
+        if self._required_external_points <= self._external_points:
+            return True
+        return False
+    
+    # check if student has enough major points
+    # TODO: maybe change the parameters that this method returns
+    def validate_major_points(self):
+        if self._required_major_points <= self._major_points:
+            # TODO: need to check if completed the minimum must courses points in major
+            return True
+        return False
+    
+    # check if student has enough minor points
+    # TODO: maybe change the parameters that this method returns
+    def validate_minor_points(self):
+        if self._required_minor_points <= self._minor_points:
+            # TODO: need to check if completed the minimum must courses points in minor
+            return True
+        return False
+
 
     # check if the students is allowed to finish the degree 
     def run_courses_check(self):
@@ -495,6 +525,21 @@ class Student:
         self.update_speciality_points()
 
         # TODO: need to check if the amount of points matches the requirements
+        # if self._required_mandatory_points < self._mandatory_points:
+            
+        # if self._required_major_points < self._major_points:
+        
+        # if self._required_minor_points < self._minor_points:
+        
+        # if self._required_external_points < self._external_points:
+        #         # count how many speciality "must" courses the student took
+                    #         self._major_must_count = 0 
+                    #         self._minor_must_count = 0 
+
+        #         # store the minimum number of "Must" courses the student need to take in major and minor specialities
+                    #         self._required_major_must_courses = None
+                    #         self._required_minor_must_courses = None   
+
 
 
 

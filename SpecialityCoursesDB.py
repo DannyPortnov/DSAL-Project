@@ -1,5 +1,5 @@
 class SpecialityCoursesDB:
-    "Speciality Object Implementation"
+    "Speciality Database Object Implementation"
 
     def __init__(self, name):
         self._name = name
