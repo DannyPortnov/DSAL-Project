@@ -3,8 +3,8 @@ from typing import Generator
 import re
 from Course import Course
 from SyllabusDB import SyllabusDB
-import Contants
-from Contants import Interships
+import Constants
+from Constants import Interships
 from unittest.mock import MagicMock
 
 
@@ -144,7 +144,7 @@ class Student:
             # When Generator depletes, next() returns None
             while (line := next(self._ignore_comments(file))) != None:
                 # current_semester_courses: list[Course] = []
-                if (line.startswith("#") and Contants.SEMESTER_LINE_INDICATOR in line):  # Start of semester
+                if (line.startswith("#") and Constants.SEMESTER_LINE_INDICATOR in line):  # Start of semester
                     match = re.match(r'# סמסטר (\d+)', line)  # Extract semester number
                     if match:
                         semester_num = int(match.group(1))
@@ -165,11 +165,11 @@ class Student:
                             self.add_speciality_course(course)
                         # current_semester_courses.append(course)
                     else:
-                        self._invalid_courses[course] = Contants.INVALID_COURSE_DATA_ERROR
+                        self._invalid_courses[course] = Constants.INVALID_COURSE_DATA_ERROR
 
     def _ignore_comments(self, file: TextIOWrapper):
         for line in file:
-            if (not line.startswith("#")) or (line.startswith("#") and Contants.SEMESTER_LINE_INDICATOR in line):
+            if (not line.startswith("#")) or (line.startswith("#") and Constants.SEMESTER_LINE_INDICATOR in line):
                 yield line.strip()
 
     # def _resume_ignore_comments(self, file: Generator[str, None, None]):
