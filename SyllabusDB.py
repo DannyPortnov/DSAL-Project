@@ -1,5 +1,5 @@
 from Course import Course
-import SpecialityCourse
+from SpecialityCourse import SpecialityCourse
 from SpecialityCoursesDB import SpecialityCoursesDB
 from Constants import *
 
@@ -88,7 +88,7 @@ class SyllabusDB:
                 self._devices.add_course(course)
         f.close()
 
-    def get_course_by_number(self, number: int):
+    def get_course_by_number(self, number: int) -> Course | SpecialityCourse | None:
         """Returns a course object by its number. If the course is not found, raises a ValueError.
         If no number is specified in the syllabus, returns None"""
         if number is None:
