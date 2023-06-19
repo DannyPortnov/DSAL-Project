@@ -2,24 +2,24 @@
 
 from Course import Course
 # from enum import StrEnum  # Assuming you have Python 3.11 or higher
-from enum import Enum
+from enum import Enum, auto
 
-class Interships(str, Enum):
-    INVALID = 'invalid',
-    INDUSTRY = 'industry',
-    RESEARCH = 'research',
-    PROJECT = 'project'
+class Interships(Enum):
+    INVALID = auto(),
+    INDUSTRY = auto(),
+    RESEARCH = auto(),
+    PROJECT = auto()
 
-class Speciality(str, Enum):
-    INVALID = 'invalid',
-    COMPUTERS = 'computers',
-    SIGNALS = 'signals',
-    DEVICES = 'devices'
+class Speciality(Enum):
+    INVALID = auto(),
+    COMPUTERS = auto(),
+    SIGNALS = auto(),
+    DEVICES = auto()
 
-class SpecialityCourseType(str, Enum):
-    NA = None,
-    REQUIRED = 'Must',
-    OPTIONAL = 'Choice',
+class SpecialityCourseType(Enum):
+    NA = auto(),
+    REQUIRED = auto(),
+    OPTIONAL = auto()
 
 class ComputersSpecialityRequiredCourseType(str, Enum):
     HW = '(חומרה)',
