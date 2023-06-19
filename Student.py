@@ -23,7 +23,7 @@ class Student:
         self._sport_points: int = None
 
         # holds the type of internship that the student chose
-        self._internship_type: Interships = None
+        self._internship_type: Interships = Interships.INVALID
 
         # store the minimum points in order to finish the degree
         self._required_mandatory_points: int = None
@@ -53,7 +53,7 @@ class Student:
         self._speciality_courses: dict[int, SpecialityCourse] = {}
 
         # Holds all the courses that were counted in the major or minor already
-        self._shared_courses: list[SpecialityCourse] = {}
+        self._shared_courses: list[SpecialityCourse] = []
 
         self._major_speciality_courses: dict[SpecialityCourseType, list[SpecialityCourse]] = {
             SpecialityCourseType.REQUIRED: [],
