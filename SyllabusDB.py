@@ -75,15 +75,13 @@ class SyllabusDB:
             # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
             if line[4] == REQUIRED_COURSE_INDICATOR:
                 course = Course(number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
-                                pre_courses_list=get_pre_course_obj(line[8:12]),
-                                parallel_course=self.get_course_by_number(line[12]))
+                                pre_courses_list=get_pre_course_obj(line[8:12]))
                 self._mandatory_courses[course.get_points()] = course
             else:
                 course = SpecialityCourse(
                     number=int(line[1]), name=line[2], points=float(line[3]), is_must=line[4],
                     computers=line[5], signals=line[6], devices=line[7],
-                    pre_courses_list=get_pre_course_obj(line[8:12]),
-                    parallel_course=self.get_course_by_number(line[12])
+                    pre_courses_list=get_pre_course_obj(line[8:12])
                 )
                 self._computers.add_course(course)
                 self._signals.add_course(course)

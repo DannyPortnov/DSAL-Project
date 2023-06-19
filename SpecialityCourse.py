@@ -6,9 +6,10 @@ import re
 class SpecialityCourse(Course):
     "Speciality Course Object Implementation"
 
-    def __init__(self, number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course) -> None:
+    def __init__(self, number: int, name: str, points: float, is_must: str,
+                 computers, signals, devices, pre_courses_list: list[Course] | None ) -> None:
 
-        super().__init__(self, number, name, points, is_must, pre_courses_list, parallel_course)
+        super().__init__(number, name, points, is_must, pre_courses_list)
         # the specialties in which this course is available
         self._specialities: dict[Speciality, SpecialityCourseType] = {}
         self._set_specialities(computers, signals, devices)
