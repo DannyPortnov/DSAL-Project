@@ -52,30 +52,31 @@ class Student:
         # key: course number, value: course object
         self._speciality_courses: dict[int, SpecialityCourse] = {}
         
+
         # major courses only
-        self._major_must_courses_only = dict()  # key: course object, value: condition (choice, must or none)
-        self._major_choice_courses_only = dict()  # key: course object, value: condition (choice, must or none)
+        self._major_must_courses_only: dict[Course, SpecialityCourseType] = {}  # key: course object, value: condition (choice, must or none)
+        self._major_choice_courses_only: dict[Course, SpecialityCourseType] = {}  # key: course object, value: condition (choice, must or none)
        
         # minor courses only
-        self._minor_must_courses_only = dict()  # key: course object, value: condition (choice, must or none)
-        self._minor_choice_courses_only = dict()  # key: course object, value: condition (choice, must or none)
+        self._minor_must_courses_only: dict[Course, SpecialityCourseType] = {}  # key: course object, value: condition (choice, must or none)
+        self._minor_choice_courses_only : dict[Course, SpecialityCourseType]= {}  # key: course object, value: condition (choice, must or none)
         
-        # Must course in major and in minor
-        self._major_must_minor_must_courses = dict()
+        # Required course in major and in minor
+        self._major_must_minor_must_courses : dict[Course, SpecialityCourseType]= {}
         
         # major-must, minor-choice
-        self._major_must_minor_choice_courses = dict()
+        self._major_must_minor_choice_courses : dict[Course, SpecialityCourseType]= {}
 
         # major-choice, minor-must
-        self.minor_must_major_choice_courses = dict()
+        self.minor_must_major_choice_courses : dict[Course, SpecialityCourseType]= {}
 
         # courses that are available in both major and minor
-        self._major_minor_shared_courses = dict()  # courses the are shared between major and minor
+        self._major_minor_shared_courses : dict[Course, SpecialityCourseType]= {}  # courses the are shared between major and minor
         
-        self._external_courses = dict()  # key: course object, value: condition (choice, must or none)
+        self._external_courses: dict[Course, SpecialityCourseType] = {}  # key: course object, value: condition (choice, must or none)
         
         # key: course, value: why course is invalid
-        self._invalid_courses: dict[Course, str] = dict()
+        self._invalid_courses: dict[Course, str] = {}
 
     def set_name(self, name):
         self._name = name
@@ -202,7 +203,7 @@ class Student:
             # if self._internship_type is None:
             self._internship_type = Interships.PROJECT
         else:
-            self._internship_type = Interships.INVALID
+            self._internship_type = Interships.INVALID # TODO: maybe raise an exception
 
     def update_mandatory_points(self, course: Course):
         for course in self._mandatory_courses.values():
@@ -215,59 +216,59 @@ class Student:
                 self.add_invalid_course(course, reason_if_not)
             
     # TODO: maybe do this when we read the student file
-    # first we need to sort the major and minor courses by the scpeciality course's condition
+    # first we need to sort the major and minor courses by the speciality course's condition
     def sort_speciality_courses_by_condition(self) -> None:
         for course in self._speciality_courses.values():
             major_condition = course.get_condition_by_speciality(self._major)
             minor_condition = course.get_condition_by_speciality(self._minor)
 
-            if major_condition == SpecialityCourseType.MUST and minor_condition == None:
+            if major_condition == SpecialityCourseType.REQUIRED and minor_condition == SpecialityCourseType.NA:
                 self._major_must_courses_only[course] = major_condition 
 
-            elif major_condition == SpecialityCourseType.CHOISE and minor_condition == None:
+            elif major_condition == SpecialityCourseType.OPTIONAL and minor_condition == SpecialityCourseType.NA:
                 self._major_choice_courses_only[course] = major_condition
             
-            elif major_condition == None and minor_condition == SpecialityCourseType.MUST:
+            elif major_condition == SpecialityCourseType.NA and minor_condition == SpecialityCourseType.REQUIRED:
                 self._minor_must_courses_only[course] = minor_condition
 
-            elif major_condition == None and minor_condition == SpecialityCourseType.CHOISE:
+            elif major_condition == SpecialityCourseType.NA and minor_condition == SpecialityCourseType.OPTIONAL:
                 self._minor_choice_courses_only[course] = minor_condition
 
-            elif major_condition == SpecialityCourseType.MUST and minor_condition == SpecialityCourseType.CHOISE:
+            elif major_condition == SpecialityCourseType.REQUIRED and minor_condition == SpecialityCourseType.OPTIONAL:
                 self._major_must_minor_choice_courses[course] = None     # TODO: mabye change it's value to something else
 
-            elif major_condition == SpecialityCourseType.CHOISE and minor_condition == SpecialityCourseType.MUST:
+            elif major_condition == SpecialityCourseType.OPTIONAL and minor_condition == SpecialityCourseType.REQUIRED:
                 self.minor_must_major_choice_courses[course] = None     # TODO: mabye change it's value to something else
             
-            elif major_condition == SpecialityCourseType.MUST and minor_condition == SpecialityCourseType.MUST:
+            elif major_condition == SpecialityCourseType.REQUIRED and minor_condition == SpecialityCourseType.REQUIRED:
                 self._major_must_minor_must_courses[course] = None     # TODO: mabye change it's value to something else
             
-            elif major_condition == SpecialityCourseType.CHOISE and minor_condition == SpecialityCourseType.CHOISE:
+            elif major_condition == SpecialityCourseType.OPTIONAL and minor_condition == SpecialityCourseType.OPTIONAL:
                 self._major_minor_shared_courses[course] = None     # TODO: mabye change it's value to something else         
             
-            elif major_condition == None and minor_condition == None:
+            elif major_condition == SpecialityCourseType.NA and minor_condition == SpecialityCourseType.NA:
                 self._external_courses[course] = None     # TODO: mabye change it's value to something else
 
 
 
     #method for updating the student's point in speciality
     def update_speciality_points(self):
-        # update MUST courses in major and minor
-        self.update_major_must_courses_only() #must in major
+        # update required courses in major and minor
+        self.update_major_must_courses_only() # required in major
 
         if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
             self.update_minor_must_courses_only() #must in minor
-            self.update_major_must_minor_choice_courses()   #must in major
-            self.update_minor_must_major_choice_courses()   #must in minor
-            self.update_major_must_minor_must_courses()     #must in major or minor
+            self.update_major_must_minor_choice_courses()   # required in major
+            self.update_minor_must_major_choice_courses()   # required in minor
+            self.update_major_must_minor_must_courses()     # required in major or minor
         
         # update external points
         self.update_external_points()
 
         # update Choice courses in major only and minor only
-        self.update_major_choice_courses_only() #must in major
+        self.update_major_choice_courses_only() # required in major
         if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
-            self.update_minor_choice_courses_only() #must in minor
+            self.update_minor_choice_courses_only() # required in minor
 
         # at this point, we check the following requirements: 
         # 1. we checked the required courses requirements in major and minor and calculated it accordingly.

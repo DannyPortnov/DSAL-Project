@@ -97,8 +97,8 @@ class Course:
 # function that converts a condition's value to an actual word
 def number_to_condition(num: int):
     if num == 1:
-        return SpecialityCourseType.MUST
+        return SpecialityCourseType.REQUIRED
     elif num == 2:
-        return SpecialityCourseType.CHOISE
+        return SpecialityCourseType.OPTIONAL
     else:
         return None

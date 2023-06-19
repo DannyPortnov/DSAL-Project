@@ -17,14 +17,14 @@ class SpecialityCourse(Course):
         # self._devices = number_to_condition(devices)
 
     # set the specialties condition: key = name ; value = must, choice or none
-    def _set_specialities(self, computers, signals, devices):
+    def _set_specialities(self, computers, signals, devices) -> None:
         # TODO: maybe move inside __init__
         self._specialities[Speciality.COMPUTERS] = translate_condition(computers)
         self._specialities[Speciality.SIGNALS] = translate_condition(signals)
         self._specialities[Speciality.DEVICES] = translate_condition(devices)
 
     # returns if a course is Must, Choise or Not in the speciality
-    def get_condition_by_speciality(self, speciality):
+    def get_condition_by_speciality(self, speciality) -> SpecialityCourseType:
         return self._specialities[speciality]
 
     # def get_computers(self):
@@ -37,7 +37,7 @@ class SpecialityCourse(Course):
     #     return self._devices
 
     # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
-    def check_if_hw_sw(self):
+    def check_if_hw_sw(self) -> str:
         pattern = fr'\(({ComputersSpecialityRequiredCourseType.HW}|{ComputersSpecialityRequiredCourseType.SW})\)'
         matches = re.findall(pattern, self._name)
         if matches:
@@ -48,10 +48,10 @@ class SpecialityCourse(Course):
 
 
 # function that converts a condition's value to an actual word
-def translate_condition(hebrew_condition):
+def translate_condition(hebrew_condition) -> SpecialityCourseType:
     if hebrew_condition == REQUIRED_COURSE_INDICATOR:
-        return SpecialityCourseType.MUST
-    elif hebrew_condition == CHOISE_COURSE_INDICATOR:
-        return SpecialityCourseType.CHOISE
+        return SpecialityCourseType.REQUIRED
+    elif hebrew_condition == OPTIONAL_COURSE_INDICATOR:
+        return SpecialityCourseType.OPTIONAL
     else:
-        return SpecialityCourseType.INVALID
+        return SpecialityCourseType.NA

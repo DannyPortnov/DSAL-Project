@@ -16,9 +16,9 @@ class Speciality(StrEnum):
     DEVICES = 'devices'
 
 class SpecialityCourseType(StrEnum):
-    INVALID = 'invalid',
-    MUST = 'Must',
-    CHOISE = 'Choise',
+    NA = None,
+    REQUIRED = 'Must',
+    OPTIONAL = 'Choice',
 
 class ComputersSpecialityRequiredCourseType(StrEnum):
     INVALID = 'invalid',
@@ -27,7 +27,7 @@ class ComputersSpecialityRequiredCourseType(StrEnum):
 
 REQUIRED_COURSE_INDICATOR = "חובה"
 
-CHOISE_COURSE_INDICATOR = "בחירה"
+OPTIONAL_COURSE_INDICATOR = "בחירה"
 
 SEMESTER_LINE_INDICATOR = "סמסטר"
 
