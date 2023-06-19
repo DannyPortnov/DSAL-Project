@@ -19,18 +19,11 @@ class Course:
         self._pre_courses: dict[Course, None] = {}
         self._set_pre_courses(pre_courses_list)
         # self._specialties = self._set_specialties(computers, signals, devices)  # the specialties in which this course is available
-        self._semester_num: int = None  # the semester in which this course was taken
         # in order to check if a student took a course or not- default value is false
         self._was_taken = False
 
-    def get_semester_num(self):
-        return self._semester_num
-
     def get_name(self):
         return self._name
-
-    def set_semester_num(self, semester_num: int):
-        self._semester_num = semester_num
 
     # set a pre_course, key = pre_course's Course object
 
