@@ -25,8 +25,16 @@ class SpecialityCourse(Course):
         self._specialities[Speciality.SIGNALS] = translate_condition(signals)
         self._specialities[Speciality.DEVICES] = translate_condition(devices)
 
-    # returns if a course is Must, Choise or Not in the speciality
-    def get_condition_by_speciality(self, speciality) -> SpecialityCourseType:
+    # 
+    def get_speciality_course_type(self, speciality: Speciality) -> SpecialityCourseType:
+        """ Returns if the course is required, optional or not in the speciality
+
+        Args:
+            speciality (`Speciality`): The speciality the course is checked for
+
+        Returns:
+            SpecialityCourseType: The course type in the speciality
+        """
         return self._specialities[speciality]
 
     # def get_computers(self):
