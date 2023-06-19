@@ -75,19 +75,19 @@ class Student:
     def set_name(self, name):
         self._name = name
 
-    def set_id(self, id):
+    def set_id(self, id: str):
         self._id = id
 
-    # TODO: convert to string to speciality
+    # TODO: convert string to speciality
     def set_major(self, major: str) -> None:
         self._major = major
-        if major == Speciality.COMPUTERS:
+        if self._major == Speciality.COMPUTERS:
             self._major_required_count = {
                 ComputersSpecialityRequiredCourseType.SW: 0, ComputersSpecialityRequiredCourseType.HW: 0}
 
     def set_minor(self, minor: str) -> None:
         self._minor = minor
-        if minor == Speciality.COMPUTERS:
+        if self._minor == Speciality.COMPUTERS:
             self._minor_required_count = {
                 ComputersSpecialityRequiredCourseType.SW: 0, ComputersSpecialityRequiredCourseType.HW: 0}
 
@@ -208,24 +208,10 @@ class Student:
     # first we need to sort the major and minor courses by the speciality course's condition
     def sort_speciality_courses(self) -> None:
         for course in self._speciality_courses.values():
-            # course_type_in_major =
-            # course_type_in_minor =
             self._major_speciality_courses[course.get_speciality_course_type(
                 self._major)].append(course)
             self._minor_speciality_courses[course.get_speciality_course_type(
                 self._minor)].append(course)
-
-            # if course_type_in_major == SpecialityCourseType.REQUIRED or course_type_in_major == SpecialityCourseType.OPTIONAL:
-            #     self._major_speciality_courses[course_type_in_major].append(course)
-
-            # else:
-            #     self._external_courses.append(course)
-
-            # if course_type_in_minor == SpecialityCourseType.REQUIRED or course_type_in_minor == SpecialityCourseType.OPTIONAL:
-            #     self._minor_speciality_courses[course_type_in_minor].append(course)
-
-            # else:
-            #     self._external_courses.append(course)
 
     def get_intersecting_courses(self, course_type_in_minor: SpecialityCourseType,
                                  course_type_in_major: SpecialityCourseType) -> set[SpecialityCourse]:
@@ -458,7 +444,7 @@ class Student:
     # update the points of major's Choice courses by using the courses that are available in the major only
 
     def update_major_optional_courses_only(self, only_in_major_and_optional_courses: set[SpecialityCourse]) -> None:
-        for course in self.only_in_major_and_optional_courses:
+        for course in only_in_major_and_optional_courses:
             if self._major_points < self._required_major_points:
                 self._major_points += course.get_points()
             # this course is available only in this speciality, if we exceed the number of points
