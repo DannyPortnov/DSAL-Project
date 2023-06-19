@@ -1,3 +1,4 @@
+from typing import Optional
 from Constants import *
 from Course import Course
 import re
@@ -38,21 +39,19 @@ class SpecialityCourse(Course):
     #     return self._devices
 
     # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
-    def check_if_hw_sw(self) -> str:
-        pattern = fr'\(({ComputersSpecialityRequiredCourseType.HW}|{ComputersSpecialityRequiredCourseType.SW})\)'
-        matches = re.findall(pattern, self._name)
-        if matches:
-            matched_words = ", ".join(matches)
-            return matched_words
-        else:
-            return None
+    def check_if_hw_sw(self) -> Optional[str]:
+        for course_type in ComputersSpecialityRequiredCourseType:
+            if course_type.value in self._name:
+                return course_type.value
+        return None
+            
 
 
 # function that converts a condition's value to an actual word
-def translate_condition(hebrew_condition) -> SpecialityCourseType:
+def translate_condition(hebrew_condition: str) -> SpecialityCourseType:
     if hebrew_condition == REQUIRED_COURSE_INDICATOR:
         return SpecialityCourseType.REQUIRED
     elif hebrew_condition == OPTIONAL_COURSE_INDICATOR:
         return SpecialityCourseType.OPTIONAL
-    else:
-        return SpecialityCourseType.NA
+    return SpecialityCourseType.NA
+        
