@@ -70,7 +70,7 @@ class Course:
         """Checks if all the pre courses were taken, 
         this allows to determine if a course was finished properly"""
         for course in self._pre_courses:
-            if course.was_taken() is False:
+            if not course.was_taken():
                 return False, format_pre_course_error(self, course)
         return True, None
 
