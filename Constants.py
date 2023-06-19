@@ -1,29 +1,29 @@
 
 
 from Course import Course
-from enum import StrEnum  # Assuming you have Python 3.11 or higher
+# from enum import StrEnum  # Assuming you have Python 3.11 or higher
+from enum import Enum
 
-class Interships(StrEnum):
+class Interships(str, Enum):
     INVALID = 'invalid',
     INDUSTRY = 'industry',
     RESEARCH = 'research',
     PROJECT = 'project'
 
-class Speciality(StrEnum):
+class Speciality(str, Enum):
     INVALID = 'invalid',
     COMPUTERS = 'computers',
     SIGNALS = 'signals',
     DEVICES = 'devices'
 
-class SpecialityCourseType(StrEnum):
+class SpecialityCourseType(str, Enum):
     NA = None,
     REQUIRED = 'Must',
     OPTIONAL = 'Choice',
 
-class ComputersSpecialityRequiredCourseType(StrEnum):
-    INVALID = 'invalid',
-    HW = 'חומרה',
-    SW = 'תוכנה',
+class ComputersSpecialityRequiredCourseType(str, Enum):
+    HW = '(חומרה)',
+    SW = '(תוכנה)'
 
 REQUIRED_COURSE_INDICATOR = "חובה"
 
