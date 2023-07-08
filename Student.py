@@ -52,17 +52,17 @@ class Student:
         # key: course number, value: course object
         self._mandatory_courses: dict[int, Course] = {}
         # key: course number, value: course object
-        self._speciality_courses: dict[int, SpecialityCourse] = {}
+        self._speciality_courses: dict[CourseType, dict[SpecialityCourseType, list[SpecialityCourse]]] = {
+            CourseType.MAJOR: {
+                type: [] for type in SpecialityCourseType
+            },
+            CourseType.MINOR: {
+                type: [] for type in SpecialityCourseType
+            }
+        }
 
         # Holds all the courses that were counted in the major or minor already
         self._shared_courses: list[SpecialityCourse] = []
-
-        self._major_speciality_courses: dict[SpecialityCourseType, list[SpecialityCourse]] = {
-            type: [] for type in SpecialityCourseType}
-
-        self._minor_speciality_courses: dict[SpecialityCourseType, list[SpecialityCourse]] = {
-            type: [] for type in SpecialityCourseType
-        }
 
         # self._external_courses: list[SpecialityCourse] = []
 
@@ -100,7 +100,10 @@ class Student:
             course (`SpecialityCourse` | `Course`): Course to add
         """
         if type(course) is SpecialityCourse:
-            self._speciality_courses[course.get_number()] = course
+            self._speciality_courses[CourseType.MAJOR][course.get_speciality_course_type(
+                self._major)].append(course)
+            self._speciality_courses[CourseType.MINOR][course.get_speciality_course_type(
+                self._major)].append(course)
         else:
             self._mandatory_courses[course.get_number()] = course
         course.mark_as_taken()
@@ -151,7 +154,7 @@ class Student:
                 course_number, credit, name = extract_course_data_from_line(line)
                 course = self._syllabus_db.get_course_by_number(course_number)
                 if course.validate_course(course_number, credit, name):
-                    self._add_course(course)
+                    self.add_course(course)
                 else:
                     self._invalid_courses[course] = INVALID_COURSE_DATA_ERROR
 
@@ -177,41 +180,39 @@ class Student:
     # updates the type of internship that the student chose
     def update_internship_type(self):
         # check if project is internship in the idustry
-        if (31054 in self._mandatory_courses.keys()) and (31055 in self._mandatory_courses.keys()):
+        if (31054 in self._mandatory_courses) and (31055 in self._mandatory_courses):
             # if self._internship_type is None:
             self._internship_type = Interships.INDUSTRY
             del self._needed_credit[CourseType.MINOR]
             # Remove minor speciality from the student's credit count
             del self._credit_taken[CourseType.MINOR]
+            # Move all minor courses to major
+            for course_type in self._speciality_courses[CourseType.MINOR]:
+                if course_type in self._speciality_courses[CourseType.MAJOR]:
+                    self._speciality_courses[CourseType.MAJOR][course_type] += self._speciality_courses[CourseType.MINOR][course_type]
+                else:
+                    self._speciality_courses[CourseType.MAJOR][course_type] = self._speciality_courses[CourseType.MINOR][course_type]
+            del self._speciality_courses[CourseType.MINOR]
 
         # check if project is research in the college
-        elif (31052 in self._mandatory_courses.keys()) and (31053 in self._mandatory_courses.keys()):
+        elif (31052 in self._mandatory_courses) and (31053 in self._mandatory_courses):
             # check if the project type had already updated, if so- the student did not report the project courses correctly
             # if self._internship_type is None:
             self._internship_type = Interships.RESEARCH
 
         # check if project is mini_project in the college
-        elif (31050 in self._mandatory_courses.keys()) and (31051 in self._mandatory_courses.keys()):
+        elif (31050 in self._mandatory_courses) and (31051 in self._mandatory_courses):
             # check if the project type had already updated, if so- the student did not report the project courses correctly
             # if self._internship_type is None:
             self._internship_type = Interships.PROJECT
         else:
             self._internship_type = Interships.INVALID  # TODO: maybe raise an exception
 
-    def update_mandatory_points(self, course: Course):
+    def update_mandatory_points(self):
         # for course in self._mandatory_courses.values():
         #     self._credit_taken[CourseType.MANDATORY] += course.get_points()
         self._credit_taken[CourseType.MANDATORY] = sum(
             course.get_points() for course in self._mandatory_courses.values())
-
-    # TODO: maybe do this when we read the student file
-    # first we need to sort the major and minor courses by the speciality course's condition
-    def sort_speciality_courses(self) -> None:
-        for course in self._speciality_courses.values():
-            self._major_speciality_courses[course.get_speciality_course_type(
-                self._major)].append(course)
-            self._minor_speciality_courses[course.get_speciality_course_type(
-                self._minor)].append(course)
 
     def get_intersecting_courses(self, course_type_in_minor: SpecialityCourseType,
                                  course_type_in_major: SpecialityCourseType) -> set[SpecialityCourse]:
@@ -225,8 +226,10 @@ class Student:
             Returns:
                 `set[SpecialityCourse]`: The intersection of speciality courses based on the specified types.
         """
-        minor_courses = self._minor_speciality_courses[course_type_in_minor]
-        major_courses = self._major_speciality_courses[course_type_in_major]
+        major_courses = self._speciality_courses[CourseType.MAJOR][course_type_in_major]
+        if CourseType.MINOR not in self._speciality_courses:
+            return set(major_courses)
+        minor_courses = self._speciality_courses[CourseType.MINOR][course_type_in_minor]
         return set(minor_courses).intersection(major_courses)
 
     # method for updating the student's point in speciality
@@ -237,19 +240,18 @@ class Student:
             self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
                                           course_type_in_minor=SpecialityCourseType.NA))  # required in major
 
-        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
-            self.update_only_in_minor_and_required_courses(
-                self.get_intersecting_courses(course_type_in_minor=SpecialityCourseType.REQUIRED,
-                                              course_type_in_major=SpecialityCourseType.NA))  # required in minor
-            self.update_major_required_minor_optional_courses(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                              course_type_in_minor=SpecialityCourseType.OPTIONAL))   # required in major
-            self.update_minor_required_major_optional_courses(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
-                                              course_type_in_minor=SpecialityCourseType.REQUIRED))   # required in minor
-            self.update_major_required_minor_required_courses(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                              course_type_in_minor=SpecialityCourseType.REQUIRED))     # required in major or minor
+        self.update_only_in_minor_and_required_courses(
+            self.get_intersecting_courses(course_type_in_minor=SpecialityCourseType.REQUIRED,
+                                          course_type_in_major=SpecialityCourseType.NA))  # required in minor
+        self.update_major_required_minor_optional_courses(
+            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
+                                          course_type_in_minor=SpecialityCourseType.OPTIONAL))   # required in major
+        self.update_minor_required_major_optional_courses(
+            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
+                                          course_type_in_minor=SpecialityCourseType.REQUIRED))   # required in minor
+        self.update_major_required_minor_required_courses(
+            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
+                                          course_type_in_minor=SpecialityCourseType.REQUIRED))     # required in major or minor
 
         # update external points
         self.update_external_points()
@@ -258,10 +260,9 @@ class Student:
         self.update_major_optional_courses_only(
             self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
                                           course_type_in_minor=SpecialityCourseType.NA))  # required in major
-        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
-            self.update_minor_optional_courses_only(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.NA,
-                                              course_type_in_minor=SpecialityCourseType.OPTIONAL))  # required in minor
+        self.update_minor_optional_courses_only(
+            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.NA,
+                                          course_type_in_minor=SpecialityCourseType.OPTIONAL))  # required in minor
 
         # at this point, we check the following requirements:
         # 1. we checked the required courses requirements in major and minor and calculated it accordingly.
@@ -481,7 +482,7 @@ class Student:
     # update the points of external speciality by using the courses that are not available in major and minor
 
     def update_external_points(self) -> None:
-        for course in set(self._major_speciality_courses[SpecialityCourseType.NA]) | set(self._minor_speciality_courses[SpecialityCourseType.NA]):
+        for course in set(self._speciality_courses[CourseType.MAJOR][SpecialityCourseType.NA]) | set(self._speciality_courses[CourseType.MINOR][SpecialityCourseType.NA]):
             self._credit_taken[CourseType.EXTERNAL] += course.get_points()
 
     # here we update points of major, minor and external specialities by using the rest of the courses that have left.
@@ -545,7 +546,6 @@ class Student:
         self.update_mandatory_points()
         self.update_internship_type()
         self.update_required_data()
-        self.sort_speciality_courses()
         self.update_speciality_points()
         self.validate_credit()
         # TODO: need to check if the amount of points matches the requirements
