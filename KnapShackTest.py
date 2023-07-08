@@ -8,7 +8,6 @@ class Item:
 def distribute_items(items: list[Item], capacities):
     num_sacks = len(capacities)
     sacks = [[] for _ in range(num_sacks)]
-    total_value = 0
     i = 0
     while len(items) != 0:
         for j, sack in enumerate(sacks):
@@ -18,13 +17,13 @@ def distribute_items(items: list[Item], capacities):
 
             if sack_weight + item.weight <= sack_capacity:
                 sack.append(item)
-                total_value += item.value
+
                 items.remove(item)
                 break
 
         i += 1
 
-    return sacks, total_value
+    return sacks
 
 
 # Example usage
@@ -42,12 +41,10 @@ item_list = [
 ]
 sack_capacities = [15, 20, 25]
 
-result, total_value = distribute_items(item_list, sack_capacities)
+result = distribute_items(item_list, sack_capacities)
 
 for i, sack in enumerate(result):
     print(f"Sack {i+1}:")
     for item in sack:
         print(f"Item: {item.name}, Weight: {item.weight}, Value: {item.value}")
     print()
-
-print("Total value:", total_value)
