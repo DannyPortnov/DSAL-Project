@@ -32,7 +32,7 @@ class Course:
                 self._pre_courses[course] = None
 
     # set the condition of the course: must or choise
-
+    # TODO: check why constant doesn't work here
     def _set_condition(self, is_must: str):
         if is_must == "חובה":
             self._is_must = True
