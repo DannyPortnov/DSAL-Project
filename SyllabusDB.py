@@ -130,7 +130,7 @@ class SyllabusDB:
 # need to get the pre_courses objects by using the pre courses list of strings
 
 
-def get_pre_course_obj(self, pre_courses_list) -> Course:
-    pre_courses = [self.get_course_by_number(course_num) for course_num in pre_courses_list]
+def get_pre_course_obj(self, pre_courses_list) -> list[Course]:
+    pre_courses = [self.get_course_by_number(
+        course_num) for course_num in pre_courses_list]
     return pre_courses
-
