@@ -9,7 +9,7 @@ def distribute_items(items: list[Item], capacities):
     num_sacks = len(capacities)
     sacks = [[] for _ in range(num_sacks)]
     total_value = 0
-    i = -1
+    i = 0
     while len(items) != 0:
         for j, sack in enumerate(sacks):
             item = items[i % len(items)]
