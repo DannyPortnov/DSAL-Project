@@ -16,6 +16,10 @@ class Speciality(Enum):
     SIGNALS = auto(),
     DEVICES = auto()
 
+class SpecialityType(Enum):
+    MAJOR = auto(),
+    MINOR = auto()
+
 class SpecialityCourseType(Enum):
     NA = auto(),
     REQUIRED = auto(),
