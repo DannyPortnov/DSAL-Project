@@ -1,8 +1,9 @@
-from Course import Course
+# from Course import Course
 from SpecialityCourse import SpecialityCourse
 from SpecialityCoursesDB import SpecialityCoursesDB
 from Constants import *
-
+import re
+# -*- coding: utf-8 -*-
 
 class SyllabusDB:
     "Syllabus Data base Object Implementation"
@@ -10,6 +11,10 @@ class SyllabusDB:
     def __init__(self, file: str):
         self._file_name = file
         # key: course number, value: course object
+        self._mandatory_courses_list = [] #just for debug
+        self._speciality_courses_list = [] #just for debug
+
+
         self._mandatory_courses: dict[int, Course] = {}
         # self._final_project_courses = dict()  # holds the type of final project that are available
         self._computers = SpecialityCoursesDB(Speciality.COMPUTERS)
@@ -71,21 +76,29 @@ class SyllabusDB:
         f, line = self._open_db()
         while line:
             line = f.readline().strip().split(',')    # read course data to a list
-            # number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course = extract_line(d)
-            # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
-            if line[4] == REQUIRED_COURSE_INDICATOR:
-                course = Course(number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
-                                pre_courses_list=get_pre_course_obj(line[8:12]))
-                self._mandatory_courses[course.get_points()] = course
+            if len(line) == 1:
+                break
+            is_empty_line = "".join(line)
+            match = re.search(r'#', line[1])
+            if match or is_empty_line == "":
+                continue
             else:
-                course = SpecialityCourse(
-                    number=int(line[1]), name=line[2], points=float(line[3]), is_must=line[4],
-                    computers=line[5], signals=line[6], devices=line[7],
-                    pre_courses_list=get_pre_course_obj(line[8:12])
-                )
-                self._computers.add_course(course)
-                self._signals.add_course(course)
-                self._devices.add_course(course)
+                # number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course = extract_line(d)
+                # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
+                if line[4] == REQUIRED_COURSE_INDICATOR:
+                    course = Course(number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
+                                    pre_courses_list=self.get_pre_course_int(line[8:12]))
+                    self._mandatory_courses[course.get_number()] = course
+                    self._mandatory_courses_list.append(course)
+                else:
+                    course = SpecialityCourse(
+                        number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
+                        computers=line[5], signals=line[6], devices=line[7],
+                        pre_courses_list=self.get_pre_course_int(line[8:12]))
+                    self._speciality_courses_list.append(course)
+                    self._computers.add_course(course)
+                    self._signals.add_course(course)
+                    self._devices.add_course(course)
         f.close()
 
     def get_course_by_number(self, number: int) -> Course | SpecialityCourse | None:
@@ -93,6 +106,10 @@ class SyllabusDB:
         If no number is specified in the syllabus, returns None"""
         if number is None:
             return None
+        
+        # if number == '':
+        #     return None
+        
         if number in self._mandatory_courses.keys():
             return self._mandatory_courses[number]
 
@@ -130,7 +147,20 @@ class SyllabusDB:
 # need to get the pre_courses objects by using the pre courses list of strings
 
 
-def get_pre_course_obj(self, pre_courses_list) -> Course:
-    pre_courses = [self.get_course_by_number(course_num) for course_num in pre_courses_list]
-    return pre_courses
+    def print_db(self):
+        for course in self._mandatory_courses_list:
+            print(f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, pre_courses_list={course._pre_courses}")
+        for course in self._speciality_courses_list:
+            print(f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, computers={course._specialities[Speciality.COMPUTERS]}, signals={course._specialities[Speciality.SIGNALS]}, devices={course._specialities[Speciality.DEVICES]}, pre_courses_list={course._pre_courses}")
+
+
+
+
+
+    def get_pre_course_int(self, pre_courses_list) -> Course:
+        pre_courses = list()
+        for course_num in pre_courses_list:
+            if course_num != '':
+                pre_courses.append((int(course_num)))
+        return pre_courses
 
