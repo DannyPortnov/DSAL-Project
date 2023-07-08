@@ -257,12 +257,12 @@ class Student:
         self.update_external_points()
 
         # update Choice courses in major only and minor only
-        self.update_major_optional_courses_only(
+        self._update_speciality_optional_courses_only(
             self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
-                                          course_type_in_minor=SpecialityCourseType.NA))  # required in major
-        self.update_minor_optional_courses_only(
+                                          course_type_in_minor=SpecialityCourseType.NA), CourseType.MAJOR)  # required in major
+        self._update_speciality_optional_courses_only(
             self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.NA,
-                                          course_type_in_minor=SpecialityCourseType.OPTIONAL))  # required in minor
+                                          course_type_in_minor=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
 
         # at this point, we check the following requirements:
         # 1. we checked the required courses requirements in major and minor and calculated it accordingly.
@@ -458,24 +458,13 @@ class Student:
                 else:
                     self._shared_courses.append(course)
 
-    # update the points of major's Choice courses by using the courses that are available in the major only
-
-    def update_major_optional_courses_only(self, only_in_major_and_optional_courses: set[SpecialityCourse]) -> None:
-        for course in only_in_major_and_optional_courses:
-            if self._credit_taken[CourseType.MAJOR] < self._needed_credit[CourseType.MAJOR]:
-                self._credit_taken[CourseType.MAJOR] += course.get_points()
+    def _update_speciality_optional_courses_only(
+            self, only_in_speciality_and_optional_courses: set[SpecialityCourse], course_type: CourseType) -> None:
+        for course in only_in_speciality_and_optional_courses:
+            if self._credit_taken[course_type] < self._needed_credit[course_type]:
+                self._credit_taken[course_type] += course.get_points()
             # this course is available only in this speciality, if we exceed the number of points
-            # for this major, we will put the course in external_points
-            else:
-                self._credit_taken[CourseType.EXTERNAL] += course.get_points()
-
-    # update the points of minor's Choice courses by using the courses that are available in the minor only
-    def update_minor_optional_courses_only(self, only_in_minor_and_optional_courses: set[SpecialityCourse]) -> None:
-        for course in only_in_minor_and_optional_courses:
-            if self._credit_taken[CourseType.MINOR] < self._needed_credit[CourseType.MINOR]:
-                self._credit_taken[CourseType.MINOR] += course.get_points()
-            # this course is available only in this speciality, if we exceed the number of points
-            # for this minor, we will put the course in external_points
+            # for this speciality, we will put the course in external_points
             else:
                 self._credit_taken[CourseType.EXTERNAL] += course.get_points()
 
