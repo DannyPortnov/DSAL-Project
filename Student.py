@@ -239,8 +239,8 @@ class Student:
 
         if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
             self.update_only_in_minor_and_required_courses(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                              course_type_in_minor=SpecialityCourseType.NA))  # required in minor
+                self.get_intersecting_courses(course_type_in_minor=SpecialityCourseType.REQUIRED,
+                                              course_type_in_major=SpecialityCourseType.NA))  # required in minor
             self.update_major_required_minor_optional_courses(
                 self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
                                               course_type_in_minor=SpecialityCourseType.OPTIONAL))   # required in major
@@ -285,7 +285,8 @@ class Student:
 
     #
     def update_only_in_major_and_required_courses(self, only_in_major_and_required: set[SpecialityCourse]) -> None:
-        """ Update the pointsof the courses that are required in the major but not available in the minor.
+        """ 
+            Update the pointsof the courses that are required in the major but not available in the minor.
             This method filters the speciality courses that are required only in the major speciality
             and not available in the minor speciality. It updates the count of major required courses
             taken by the student and increments the major points accordingly. If the major points exceed
@@ -319,8 +320,7 @@ class Student:
             if self._minor_points < self._required_minor_points:
                 if self._minor == Speciality.COMPUTERS:
                     # we need to assume that each computers' course name's indicate if it's HW or SW
-                    is_hw_sw = course.check_if_hw_sw()
-                    if is_hw_sw is not None:
+                    if (is_hw_sw := course.check_if_hw_sw()) is not None:
                         self._minor_required_count[is_hw_sw] += 1
                     # else:
                     #     self._minor_required_count += 1
@@ -472,18 +472,50 @@ class Student:
     # here we update points of major, minor and external specialities by using the rest of the courses that have left.
 
     def update_major_minor_shared_courses_points(self) -> None:
-        for course in self._shared_courses:
-            # TODO: check where to put a course in consideration of its points.
-            course_points = course.get_points()
-            # if (self._required_major_points - (self._major_points + course_points)) > (self._required_minor_points - (self._minor_points + course_points)):
-            # self._major_points += course_points
+        course_items = [(course, course.get_points())
+                        for course in self._shared_courses]
+        capacities = [self._required_major_points - self._major_points]
+        # capacities = {SpecialityType.MAJOR: (self._required_major_points - self._major_points, self._major_points)}
+        if self._internship_type != Interships.INDUSTRY:
+            capacities.append(self._required_minor_points - self._minor_points)
+        capacities.append(self._required_external_points - self._external_points)
+        sacks = [[] for _ in range(len(capacities))]
+        i = 0
+        # while len(course_items) != 0:
+        #     for j, sack in enumerate(sacks):
+        #         item = course_items[i % len(course_items)]
+        #         sack_capacity = sacks[j]
+        #         sack_weight = sum(item[1] for item in sack)
 
-            if self._major_points + course_points < self._required_major_points:
-                self._major_points += course_points
-            elif self._minor_points + course_points < self._required_minor_points:
-                self._minor_points += course_points
-            elif self._external_points + course_points < self._required_external_points:
-                self._external_points += course_points
+        #         if sack_weight + item[1] <= sack_capacity:
+        #             sack.append(item)
+        #             course_items.remove(item)
+        #             break
+        #     i += 1
+
+        while len(course_items) != 0:
+            current_course = course_items[i % len(course_items)]
+            emptiest_sack_size = float('inf')
+            emptiest_sack_index = -1
+            for j, sack in enumerate(sacks):
+                sack_weight = capacities[j] / current_course[1]
+                if emptiest_sack_size > sack_weight:
+                    emptiest_sack_size = sack_weight
+                    emptiest_sack_index = j
+
+            if emptiest_sack_size + current_course[1] <= capacities[emptiest_sack_index]:
+                sack.append(current_course)
+                course_items.remove(current_course)
+                capacities[emptiest_sack_index] -= current_course[1]
+
+            i += 1
+
+        self._major_points += sum(item[1] for item in sacks[0])
+        i = 1
+        if len(sacks) == 3:
+            self._minor_points += sum(item[1] for item in sacks[i])
+            i += 1
+        self._external_points += sum(item[1] for item in sacks[i])
 
     def update_required_data(self) -> None:
         req_mand, req_maj, req_min, req_ext = self._syllabus_db.get_required_points(
