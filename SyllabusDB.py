@@ -63,7 +63,7 @@ class SyllabusDB:
         return self._mandatory_points[final_project], self._major_points[final_project], \
             self._minor_points[final_project], self._external_points[final_project]
 
-    def get_required_speciality_must(self, final_project):
+    def get_required_courses_in_speciality(self, final_project) -> tuple[int, int]:
         return self._minor_must_courses[final_project], self._major_must_courses[final_project]
 
     # TODO: update DB creation to ignore the lines with the symbol: #
