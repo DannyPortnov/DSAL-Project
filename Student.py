@@ -535,32 +535,24 @@ class Student:
     # TODO: maybe change the parameters that this method returns
 
     def validate_mandatory_points(self) -> bool:
-        if self._required_mandatory_points <= self._mandatory_points:
-            return True
-        return False
+        return self._required_mandatory_points <= self._mandatory_points
 
     # check if student has enough external points
     # TODO: maybe change the parameters that this method returns
     def validate_external_points(self) -> bool:
-        if self._required_external_points <= self._external_points:
-            return True
-        return False
+        return self._required_external_points <= self._external_points
 
     # check if student has enough major points
     # TODO: maybe change the parameters that this method returns
+    # TODO: need to check if completed the minimum required courses points in major
     def validate_major_points(self) -> bool:
-        if self._required_major_points <= self._major_points:
-            # TODO: need to check if completed the minimum required courses points in major
-            return True
-        return False
+        return self._required_major_points <= self._major_points
 
     # check if student has enough minor points
     # TODO: maybe change the parameters that this method returns
+    # TODO: need to check if completed the minimum required courses points in minor
     def validate_minor_points(self) -> bool:
-        if self._required_minor_points <= self._minor_points:
-            # TODO: need to check if completed the minimum required courses points in minor
-            return True
-        return False
+        return self._required_minor_points <= self._minor_points
 
     # check if the students is allowed to finish the degree
 
