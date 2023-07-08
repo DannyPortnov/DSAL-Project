@@ -25,9 +25,8 @@ class Course:
     def get_name(self):
         return self._name
 
-    # set a pre_course, key = pre_course's Course object
-
-    def _set_pre_courses(self, pre_courses_list: list[Course] | None):
+    # set a pre_course, key = pre_course's number
+    def _set_pre_courses(self, pre_courses_list: list[int] | None):
         if pre_courses_list is not None and len(pre_courses_list):
             for course in pre_courses_list:
                 self._pre_courses[course] = None
@@ -35,7 +34,7 @@ class Course:
     # set the condition of the course: must or choise
 
     def _set_condition(self, is_must: str):
-        if is_must == REQUIRED_COURSE_INDICATOR:
+        if is_must == "חובה":
             self._is_must = True
         self._is_must = False
 
