@@ -9,15 +9,15 @@ class Course:
 
     # def __init__(self, number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course):
     def __init__(self, number: int, name: str, points: float, is_must: str,
-                 pre_courses_list: list[Course] | None):
-        self._name: str = name
+                 pre_courses_list: list[int] | None):
+        self._name: str = name.strip()
         self._number = number
         self._points = points
         # is the course's condition must or choice
         self._set_condition(is_must)  # Sets self._is_must
         # hold the pre-courses that must be taken before this course
-        self._pre_courses: dict[Course, None] = {}
-        self._set_pre_courses(pre_courses_list)
+        self._pre_courses: dict[int, Course] = dict.fromkeys(pre_courses_list, None)
+        # self._set_pre_courses()
         # self._specialties = self._set_specialties(computers, signals, devices)  # the specialties in which this course is available
         # in order to check if a student took a course or not- default value is false
         self._was_taken = False
@@ -26,10 +26,13 @@ class Course:
         return self._name
 
     # set a pre_course, key = pre_course's number
-    def _set_pre_courses(self, pre_courses_list: list[int] | None):
-        if pre_courses_list is not None and len(pre_courses_list):
-            for course in pre_courses_list:
-                self._pre_courses[course] = None
+    def set_pre_courses(self, courses: list[Course]):
+        if self._pre_courses is not None and len(self._pre_courses):
+            for course in self._pre_courses:
+                self._pre_courses.append(course)
+
+    def get_pre_courses(self) -> dict[int, Course]:
+        return self._pre_courses
 
     # set the condition of the course: must or choise
     # TODO: check why constant doesn't work here
@@ -61,14 +64,16 @@ class Course:
     def is_finished_properly(self) -> tuple[bool, str | None]:
         """Checks if all the pre courses were taken, 
         this allows to determine if a course was finished properly"""
-        for course in self._pre_courses:
+        # courses = [course for C in self._pre_courses if not course.was_taken()]
+        for course in self._pre_courses.values():
             if not course.was_taken():
                 return False, format_pre_course_error(self, course)
         return True, None
 
     # validate a course by checking it's points, name and number
     def validate_course(self, number: int, points: float, name: str):
-        if number == self._number and points == self._points and name == self._name:
+        # if number == self._number and points == self._points and name == self._name:
+        if number == self._number and points == self._points:
             return True
         return False
 
