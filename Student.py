@@ -17,8 +17,8 @@ class Student:
         self._syllabus_db = syllabus_db
         self._name: str = None
         self._id: int = None
-        self._major: Speciality = Speciality.INVALID
-        self._minor: Speciality = Speciality.INVALID
+        self._major: Optional[Speciality] = None
+        self._minor: Optional[Speciality] = None
         self._general_points: int = None
         self._sport_points: int = None
 
@@ -67,7 +67,9 @@ class Student:
         # self._external_courses: list[SpecialityCourse] = []
 
         # key: course, value: why course is invalid
-        self._invalid_courses: dict[SpecialityCourse, str] = {}
+        self._invalid_courses: dict[Course | int, str] = {}
+        # TODO: print somewhen the invalid courses
+        self.read_student_data()
 
     def set_name(self, name):
         self._name = name
@@ -76,13 +78,15 @@ class Student:
         self._id = id
 
     def set_major(self, major: str) -> None:
-        self._major = Speciality[major]
+        # TODO: Find out if we need to check if the major is valid
+        self._major = Speciality[major.upper()]
         if self._major == Speciality.COMPUTERS:
             self._required_speciality_taken[CourseType.MAJOR] = {
                 ComputersSpecialityRequiredCourseType.SW: 0, ComputersSpecialityRequiredCourseType.HW: 0}
 
     def set_minor(self, minor: str) -> None:
-        self._minor = Speciality[minor]
+        # TODO: Find out if we need to check if the minor is valid
+        self._minor = Speciality[minor.upper()]
         if self._minor == Speciality.COMPUTERS:
             self._required_speciality_taken[CourseType.MINOR] = {
                 ComputersSpecialityRequiredCourseType.SW: 0, ComputersSpecialityRequiredCourseType.HW: 0}
@@ -103,7 +107,7 @@ class Student:
             self._speciality_courses[CourseType.MAJOR][course.get_speciality_course_type(
                 self._major)].append(course)
             self._speciality_courses[CourseType.MINOR][course.get_speciality_course_type(
-                self._major)].append(course)
+                self._minor)].append(course)
         else:
             self._mandatory_courses[course.get_number()] = course
         course.mark_as_taken()
@@ -117,17 +121,28 @@ class Student:
             course (Course): course to remove
             message (str): reason for removing the course
         """
-        self._invalid_courses[(course_number := course.get_number())] = message
-        if course.is_mandatory():
-            self._mandatory_courses.pop(course_number)
-        else:
-            self._speciality_courses.pop(course_number)
+        self._invalid_courses[course] = message
+        if type(course) is SpecialityCourse:
+            for speciality_type in self._speciality_courses:
+                for speciality in Speciality:
+                    course_type_in_speciality = course.get_speciality_course_type(
+                        speciality)
+                    if (course in
+                            self._speciality_courses[speciality_type][course_type_in_speciality]):
+                        self._speciality_courses[speciality_type][course_type_in_speciality].remove(
+                            course)
 
-    def _check_finished_courses(self) -> None:
+        else:  # is mandatory course
+            self._mandatory_courses.pop(course.get_number())
+
+    def _check_all_courses_were_finished_properly(self) -> None:
         """Ensure that all taken courses were finished properly.
         """
-        all_courses: dict[int, Course | SpecialityCourse] = {
-            **self._mandatory_courses, **self._speciality_courses}
+        all_courses: dict[int, Course | SpecialityCourse] = {**self._mandatory_courses}
+        for _, inner_dict in self._speciality_courses.items():
+            for _, speciality_courses in inner_dict.items():
+                for course in speciality_courses:
+                    all_courses[course.get_number()] = course
         for course in all_courses.values():
             is_finished, reason_if_not = course.is_finished_properly()
             if not is_finished and reason_if_not is not None:
@@ -136,31 +151,36 @@ class Student:
     def read_student_data(self):
         with open(self._file_name, "r", encoding="utf-8") as file:
             # TODO: Put all of this in __init__ ?
-            line = next(self._ignore_comments(file))
+            line = next(self._ignore_comments_and_empty_lines(file))
             self.set_name(extract_student_data_from_line(line))
-            line = next(self._ignore_comments(file))
+            line = next(self._ignore_comments_and_empty_lines(file))
             self.set_id(extract_student_data_from_line(line))
-            line = next(self._ignore_comments(file))
+            line = next(self._ignore_comments_and_empty_lines(file))
             self.set_major(extract_student_data_from_line(line))
-            line = next(self._ignore_comments(file))
+            line = next(self._ignore_comments_and_empty_lines(file))
             self.set_minor(extract_student_data_from_line(line))
-            line = next(self._ignore_comments(file))
+            line = next(self._ignore_comments_and_empty_lines(file))
             self.set_general_points(extract_student_data_from_line(line))
-            line = next(self._ignore_comments(file))
+            line = next(self._ignore_comments_and_empty_lines(file))
             self.set_sport_points(extract_student_data_from_line(line))
 
             # When Generator depletes, next() returns None
-            while (line := next(self._ignore_comments(file))) != None:
+            while (line := next(self._ignore_comments_and_empty_lines(file), None)) != None:
                 course_number, credit, name = extract_course_data_from_line(line)
-                course = self._syllabus_db.get_course_by_number(course_number)
+                # TODO: make prettier
+                try:
+                    course = self._syllabus_db.get_course_by_number(course_number)
+                except ValueError:
+                    self._invalid_courses[course_number] = INVALID_COURSE_DATA_ERROR
+                    continue
                 if course.validate_course(course_number, credit, name):
                     self.add_course(course)
                 else:
                     self._invalid_courses[course] = INVALID_COURSE_DATA_ERROR
 
-    def _ignore_comments(self, file: TextIOWrapper) -> Generator[str, None, None]:
+    def _ignore_comments_and_empty_lines(self, file: TextIOWrapper) -> Generator[str, None, None]:
         for line in file:
-            if not line.startswith("#"):
+            if not line.startswith("#") and line != '\n':
                 yield line.strip()
 
     # def _resume_ignore_comments(self, file: Generator[str, None, None]):
@@ -183,16 +203,6 @@ class Student:
         if (31054 in self._mandatory_courses) and (31055 in self._mandatory_courses):
             # if self._internship_type is None:
             self._internship_type = Interships.INDUSTRY
-            del self._needed_credit[CourseType.MINOR]
-            # Remove minor speciality from the student's credit count
-            del self._credit_taken[CourseType.MINOR]
-            # Move all minor courses to major
-            for course_type in self._speciality_courses[CourseType.MINOR]:
-                if course_type in self._speciality_courses[CourseType.MAJOR]:
-                    self._speciality_courses[CourseType.MAJOR][course_type] += self._speciality_courses[CourseType.MINOR][course_type]
-                else:
-                    self._speciality_courses[CourseType.MAJOR][course_type] = self._speciality_courses[CourseType.MINOR][course_type]
-            del self._speciality_courses[CourseType.MINOR]
 
         # check if project is research in the college
         elif (31052 in self._mandatory_courses) and (31053 in self._mandatory_courses):
@@ -207,6 +217,18 @@ class Student:
             self._internship_type = Interships.PROJECT
         else:
             self._internship_type = Interships.INVALID  # TODO: maybe raise an exception
+        self.update_required_data()
+        if self._internship_type == Interships.INDUSTRY:
+            del self._needed_credit[CourseType.MINOR]
+            # Remove minor speciality from the student's credit count
+            del self._credit_taken[CourseType.MINOR]
+            # Move all minor courses to major
+            for course_type in self._speciality_courses[CourseType.MINOR]:
+                if course_type in self._speciality_courses[CourseType.MAJOR]:
+                    self._speciality_courses[CourseType.MAJOR][course_type] += self._speciality_courses[CourseType.MINOR][course_type]
+                else:
+                    self._speciality_courses[CourseType.MAJOR][course_type] = self._speciality_courses[CourseType.MINOR][course_type]
+            del self._speciality_courses[CourseType.MINOR]
 
     def update_mandatory_points(self):
         # for course in self._mandatory_courses.values():
@@ -239,19 +261,19 @@ class Student:
         self.update_only_in_major_and_required_courses(
             self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
                                           course_type_in_minor=SpecialityCourseType.NA))  # required in major
-
-        self.update_only_in_minor_and_required_courses(
-            self.get_intersecting_courses(course_type_in_minor=SpecialityCourseType.REQUIRED,
-                                          course_type_in_major=SpecialityCourseType.NA))  # required in minor
-        self.update_major_required_minor_optional_courses(
-            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                          course_type_in_minor=SpecialityCourseType.OPTIONAL))   # required in major
-        self.update_minor_required_major_optional_courses(
-            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
-                                          course_type_in_minor=SpecialityCourseType.REQUIRED))   # required in minor
-        self.update_major_required_minor_required_courses(
-            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                          course_type_in_minor=SpecialityCourseType.REQUIRED))     # required in major or minor
+        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
+            self.update_only_in_minor_and_required_courses(
+                self.get_intersecting_courses(course_type_in_minor=SpecialityCourseType.REQUIRED,
+                                              course_type_in_major=SpecialityCourseType.NA))  # required in minor
+            self.update_major_required_minor_optional_courses(
+                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
+                                              course_type_in_minor=SpecialityCourseType.OPTIONAL))   # required in major
+            self.update_minor_required_major_optional_courses(
+                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
+                                              course_type_in_minor=SpecialityCourseType.REQUIRED))   # required in minor
+            self.update_major_required_minor_required_courses(
+                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
+                                              course_type_in_minor=SpecialityCourseType.REQUIRED))     # required in major or minor
 
         # update external points
         self.update_external_points()
@@ -260,9 +282,10 @@ class Student:
         self._update_speciality_optional_courses_only(
             self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
                                           course_type_in_minor=SpecialityCourseType.NA), CourseType.MAJOR)  # required in major
-        self._update_speciality_optional_courses_only(
-            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.NA,
-                                          course_type_in_minor=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
+        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
+            self._update_speciality_optional_courses_only(
+                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.NA,
+                                              course_type_in_minor=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
 
         # at this point, we check the following requirements:
         # 1. we checked the required courses requirements in major and minor and calculated it accordingly.
@@ -471,7 +494,11 @@ class Student:
     # update the points of external speciality by using the courses that are not available in major and minor
 
     def update_external_points(self) -> None:
-        for course in set(self._speciality_courses[CourseType.MAJOR][SpecialityCourseType.NA]) | set(self._speciality_courses[CourseType.MINOR][SpecialityCourseType.NA]):
+        # TODO: make prettier later :)
+        external_courses = set(self._speciality_courses[CourseType.MAJOR][SpecialityCourseType.NA]) | \
+            set(self._speciality_courses[CourseType.MINOR][SpecialityCourseType.NA] if CourseType.MINOR in self._speciality_courses
+                else set(self._speciality_courses[CourseType.MAJOR][SpecialityCourseType.NA]))
+        for course in external_courses:
             self._credit_taken[CourseType.EXTERNAL] += course.get_points()
 
     # here we update points of major, minor and external specialities by using the rest of the courses that have left.
@@ -517,26 +544,28 @@ class Student:
 
     # check if student has enough mandatory points
     # TODO: maybe change the parameters that this method returns
-    def validate_credit(self) -> bool:
+    def validate_credit(self) -> str:
         """ Checks if the student has enough credit of each type.
 
         Returns:
             bool: True if the student has enough credit of each type, False otherwise.
         """
+        # TODO: check this function
+        # TODO: maybe exclude mandatory points from this function
+        messages: str = ""
         for credit_type, credit in self._needed_credit.items():
             if self._credit_taken[credit_type] < credit:
-                return False
-        return True
+                messages += f"You need to take {credit - self._credit_taken[credit_type]} more {credit_type.name.lower()} credit\n"
+        return messages if len(messages) > 0 else "You have enough credit"
 
     # check if the students is allowed to finish the degree
 
-    def run_courses_check(self) -> bool:
-        self._check_finished_courses()
+    def run_courses_check(self) -> str:
+        self._check_all_courses_were_finished_properly()
         self.update_mandatory_points()
         self.update_internship_type()
-        self.update_required_data()
         self.update_speciality_points()
-        self.validate_credit()
+        return self.validate_credit()
         # TODO: need to check if the amount of points matches the requirements
         # if self._required_mandatory_points < self._mandatory_points:
 
@@ -554,7 +583,7 @@ class Student:
         #         self._needed_required_courses[CourseType.MINOR] = None
 
 
-def extract_course_data_from_line(line: str):
+def extract_course_data_from_line(line: str) -> tuple[int, float, str]:
     line = line.strip()  # Remove leading/trailing whitespaces
     # Use regex to extract the course number, credit, and name
     match = re.match(r'^(\d+)\s+([\d.]+)\s+(.+)$', line)
@@ -565,7 +594,7 @@ def extract_course_data_from_line(line: str):
         print("Course Number:", course_number)
         print("Credit:", credit)
         print("Name:", name)
-    return course_number, credit, name
+    return int(course_number), float(credit), name
 
 
 def extract_student_data_from_line(line: str):
