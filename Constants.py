@@ -1,6 +1,10 @@
 
 
-from Course import Course
+from __future__ import annotations  # for self reference
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from Course import Course
+
 # from enum import StrEnum  # Assuming you have Python 3.11 or higher
 from enum import Enum, auto
 
@@ -13,16 +17,16 @@ class Interships(Enum):
 
 
 class Speciality(Enum):
-    INVALID = auto(),
+    # INVALID = auto(),
     COMPUTERS = auto(),
     SIGNALS = auto(),
     DEVICES = auto()
 
 
 class CourseType(Enum):
+    MANDATORY = auto(),
     MAJOR = auto(),
     MINOR = auto(),
-    MANDATORY = auto(),
     EXTERNAL = auto()
 
 
@@ -50,4 +54,4 @@ COURSE_NUMBER_NOT_FOUND_ERROR = "Course number not found"
 
 def format_pre_course_error(course: Course, pre_course: Course):
     """Returns a formatted error message for a pre course that hasn't been done"""
-    return f"You haven't done {course.get_name}'s pre-course, {pre_course.get_name()}"
+    return f"You haven't done {course.get_name()}'s pre-course, {pre_course.get_name()}"
