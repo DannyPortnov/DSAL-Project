@@ -1,9 +1,14 @@
 # from Course import Course
+from __future__ import annotations  # for self reference
 from SpecialityCourse import SpecialityCourse
 from SpecialityCoursesDB import SpecialityCoursesDB
 from Constants import *
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+from Course import Course
 import re
 # -*- coding: utf-8 -*-
+
 
 class SyllabusDB:
     "Syllabus Data base Object Implementation"
@@ -11,10 +16,9 @@ class SyllabusDB:
     def __init__(self, file: str):
         self._file_name = file
         # key: course number, value: course object
-        self._mandatory_courses_list = [] #just for debug
-        self._speciality_courses_list = [] #just for debug
-
-
+        self._mandatory_courses_list = []  # just for debug
+        self._speciality_courses_list = []  # just for debug
+        self.all_courses: list[Course] = []
         self._mandatory_courses: dict[int, Course] = {}
         # self._final_project_courses = dict()  # holds the type of final project that are available
         self._computers = SpecialityCoursesDB(Speciality.COMPUTERS)
@@ -99,17 +103,22 @@ class SyllabusDB:
                     self._computers.add_course(course)
                     self._signals.add_course(course)
                     self._devices.add_course(course)
+                self.all_courses.append(course)
         f.close()
+        for course in self.all_courses:  # Update the pre courses to be course objects
+            pre_courses = course.get_pre_courses()
+            for pre_course in pre_courses:
+                pre_courses[pre_course] = self.get_course_by_number(pre_course)
 
     def get_course_by_number(self, number: int) -> Course | SpecialityCourse | None:
         """Returns a course object by its number. If the course is not found, raises a ValueError.
         If no number is specified in the syllabus, returns None"""
         if number is None:
             return None
-        
+
         # if number == '':
         #     return None
-        
+
         if number in self._mandatory_courses.keys():
             return self._mandatory_courses[number]
 
@@ -146,21 +155,16 @@ class SyllabusDB:
 
 # need to get the pre_courses objects by using the pre courses list of strings
 
-
     def print_db(self):
         for course in self._mandatory_courses_list:
             print(f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, pre_courses_list={course._pre_courses}")
         for course in self._speciality_courses_list:
-            print(f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, computers={course._specialities[Speciality.COMPUTERS]}, signals={course._specialities[Speciality.SIGNALS]}, devices={course._specialities[Speciality.DEVICES]}, pre_courses_list={course._pre_courses}")
+            print(
+                f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, computers={course._specialities[Speciality.COMPUTERS]}, signals={course._specialities[Speciality.SIGNALS]}, devices={course._specialities[Speciality.DEVICES]}, pre_courses_list={course._pre_courses}")
 
-
-
-
-
-    def get_pre_course_int(self, pre_courses_list) -> Course:
-        pre_courses = list()
+    def get_pre_course_int(self, pre_courses_list: list[str]) -> list[int]:
+        pre_courses: list[int] = []
         for course_num in pre_courses_list:
             if course_num != '':
                 pre_courses.append((int(course_num)))
         return pre_courses
-
