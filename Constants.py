@@ -36,7 +36,7 @@ class SpecialityCourseType(Enum):
     OPTIONAL = auto()
 
 
-class ComputersSpecialityRequiredCourseType(str, Enum):
+class ComputersRequiredCourseType(str, Enum):
     HW = '(חומרה)',
     SW = '(תוכנה)'
 
