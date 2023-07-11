@@ -34,10 +34,10 @@ class SyllabusDB:
             Interships.INDUSTRY: 0, Interships.RESEARCH: 10, Interships.PROJECT: 10}
         self._external_points: dict[Interships, int] = {
             Interships.INDUSTRY: 11, Interships.RESEARCH: 6, Interships.PROJECT: 8}
-        self._major_must_courses = {Interships.INDUSTRY: 4,
-                                    Interships.RESEARCH: 4, Interships.PROJECT: 4}
-        self._minor_must_courses = {Interships.INDUSTRY: 0,
-                                    Interships.RESEARCH: 3, Interships.PROJECT: 3}
+        self._must_courses: dict[CourseType, dict[Interships, int]] = {CourseType.MAJOR:  {Interships.INDUSTRY: 4,
+                                                                                           Interships.RESEARCH: 4, Interships.PROJECT: 4},
+                                                                       CourseType.MINOR:  {Interships.INDUSTRY: 0,
+                                                                                           Interships.RESEARCH: 3, Interships.PROJECT: 3}}
         self._general_points = 6
         self._sport_points = 1
         self.create_db()  # automatically create the DB when the object is created
@@ -72,10 +72,28 @@ class SyllabusDB:
         return self._mandatory_points[final_project], self._major_points[final_project], \
             self._minor_points[final_project], self._external_points[final_project]
 
-    def get_required_courses_in_speciality(self, final_project) -> tuple[int, int]:
-        return self._minor_must_courses[final_project], self._major_must_courses[final_project]
+    def get_total_required_courses(
+        self, final_project: Interships,
+        major_speciality: Speciality,
+            minor_speciality: Speciality):
+        major_tuple = self._get_required_courses_in_speciality(
+            final_project, major_speciality, CourseType.MAJOR)
+        minor_tuple = self._get_required_courses_in_speciality(
+            final_project, minor_speciality, CourseType.MINOR)
+        return (major_tuple, minor_tuple)
+
+    def _get_required_courses_in_speciality(
+            self, final_project: Interships, speciality: Speciality, speciality_type: CourseType) -> tuple[int, int] | tuple[int]:
+        required_courses_amount = self._must_courses[speciality_type][final_project]
+        if speciality == Speciality.COMPUTERS:
+            required_courses = (required_courses_amount//2,
+                                required_courses_amount//2)
+        else:
+            required_courses = (required_courses_amount,)
+        return required_courses
 
     # TODO: update DB creation to ignore the lines with the symbol: #
+
     def create_db(self):
         f, line = self._open_db()
         while line:
