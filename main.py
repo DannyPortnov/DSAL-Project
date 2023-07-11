@@ -53,8 +53,24 @@ def generate_db(file):
     # If the code reaches this point, it means you have finished reading the file
 
 
-if __name__ == "__main__":
-    syllabus = SyllabusDB("courses_fulllist.csv")
-    student = Student("student1.txt", syllabus)
+def test_2_specialities_with_1_missing_required_in_minor() -> None:
+
+    student = init_student_and_db(
+        "Student with 2 specialties but missing 1 required in minor.txt")
+    student.print_invalid_courses()
     messages = student.run_courses_check()
     print(messages)
+
+
+def init_student_and_db(student_file: str) -> Student:
+    syllabus = SyllabusDB("courses_fulllist.csv")
+    student = Student(student_file, syllabus)
+    return student
+
+
+if __name__ == "__main__":
+    test_2_specialities_with_1_missing_required_in_minor()
+    # student = init_student_and_db("student1.txt")
+    # student.print_invalid_courses()
+    # messages = student.run_courses_check()
+    # print(messages)
