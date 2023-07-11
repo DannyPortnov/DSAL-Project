@@ -80,6 +80,9 @@ class Course:
     def __str__(self):
         return f"Course: {self._number}, {self._name}, {self._points} points"
 
+    def __repr__(self) -> str:
+        return f"{self._name}"
+
 
 # function that converts a condition's value to an actual word
 def number_to_condition(num: int):
