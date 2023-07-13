@@ -525,31 +525,28 @@ class Student:
             return
         course_items = [(course, course.get_points())
                         for course in self._shared_courses]
-        capacities = [self._required_credits[type] - self._credits_taken[type]
-                      for type in self._required_credits]
+        capacities = [diff for type in self._required_credits if (
+            diff := self._required_credits[type] - self._credits_taken[type]) != 0]
+        # Create buckets only of credits that aren't satisfied
         sacks: list[list[tuple[SpecialityCourse, float]]] = [[]
                                                              for _ in range(len(capacities))]
-
+        capacities.sort()  # ascending order
         i = 0
-
         while len(course_items) != 0:
             current_course = course_items[i % len(course_items)]
-            emptiest_sack_size = float('inf')
-            emptiest_sack_index = -1
-            for j, sack in enumerate(sacks):
-                sack_weight = capacities[j] / current_course[1]
-                if emptiest_sack_size > sack_weight:
-                    emptiest_sack_size = sack_weight
-                    emptiest_sack_index = j
-
-            if emptiest_sack_size + current_course[1] <= capacities[emptiest_sack_index]:
-                sack.append(current_course)
-                course_items.remove(current_course)
-                capacities[emptiest_sack_index] -= current_course[1]
+            # Add the course to the smallest bucket that has enough space
+            for sack_index, sack in enumerate(sacks):
+                if current_course[1] <= capacities[sack_index]:
+                    sack.append(current_course)
+                    course_items.remove(current_course)
+                    capacities[sack_index] -= current_course[1]
+                    break
 
             i += 1
 
-        for type, sack in zip(self._credits_taken, sacks):
+        filtered_credits_taken = {
+            type: self._credits_taken[type] for type in self._credits_taken if self._required_credits[type] != self._credits_taken[type]}
+        for type, sack in zip(filtered_credits_taken, sacks):
             self._credits_taken[type] += sum(item[1] for item in sack)
 
     def update_required_data(self) -> None:
