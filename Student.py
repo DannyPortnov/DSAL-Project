@@ -6,6 +6,7 @@ from SyllabusDB import SyllabusDB
 from Constants import *
 from unittest.mock import MagicMock
 from SpecialityCourse import SpecialityCourse
+from itertools import cycle
 
 
 class Student:
@@ -304,7 +305,8 @@ class Student:
             self._update_speciality_optional_courses_only(
                 self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.NA,
                                               course_type_in_minor=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
-
+        self._shared_courses += self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
+                                                              course_type_in_minor=SpecialityCourseType.OPTIONAL)  # Add shared optional courses to shared courses
         # at this point, we check the following requirements:
         # 1. we checked the required courses requirements in major and minor and calculated it accordingly.
         # 2. we calculated the optional courses that are available in major only and minor only accordingly.
@@ -521,33 +523,83 @@ class Student:
     # here we update points of major, minor and external specialities by using the rest of the courses that have left.
 
     def update_major_minor_shared_courses_points(self) -> None:
+
+        def filter_credits_taken() -> dict[CourseType, int]:
+            return {
+                type: self._credits_taken[type] for type in self._credits_taken if self._required_credits[type] > self._credits_taken[type]}
+
         if len(self._shared_courses) == 0:
             return
-        course_items = [(course, course.get_points())
-                        for course in self._shared_courses]
+        course_items: list[tuple[SpecialityCourse, float]] = [(course, course.get_points())
+                                                              for course in self._shared_courses]
         capacities = [diff for type in self._required_credits if (
-            diff := self._required_credits[type] - self._credits_taken[type]) != 0]
+            diff := self._required_credits[type] - self._credits_taken[type]) > 0]
         # Create buckets only of credits that aren't satisfied
         sacks: list[list[tuple[SpecialityCourse, float]]] = [[]
                                                              for _ in range(len(capacities))]
         capacities.sort()  # ascending order
-        i = 0
+        courses_that_didnt_fit: dict[SpecialityCourse,
+                                     None] = {}  # ONLY DICTIONARY WORKS HERE !!!
         while len(course_items) != 0:
-            current_course = course_items[i % len(course_items)]
-            # Add the course to the smallest bucket that has enough space
+            current_course = course_items[-1]
+            sacks_benefits: list[tuple[float, int]] = []
             for sack_index, sack in enumerate(sacks):
+                benefit = round(capacities[sack_index] / current_course[1], 2)
+                sacks_benefits.append((benefit, sack_index))
+            sacks_benefits.sort(key=lambda x: x[0], reverse=True)
+            # if best_benefit < benefit and best_sack_index not in current_course[2]:
+            #     best_benefit = benefit
+            #     best_sack_index = j
+            for benefit, sack_index in sacks_benefits:
                 if current_course[1] <= capacities[sack_index]:
-                    sack.append(current_course)
+                    sacks[sack_index].append(current_course)
                     course_items.remove(current_course)
                     capacities[sack_index] -= current_course[1]
                     break
+            if current_course not in course_items:
+                continue
+            courses_that_didnt_fit[current_course[0]] = None
+            course_items.remove(current_course)
+            if len(course_items) == len(courses_that_didnt_fit):
+                break
 
-            i += 1
-
-        filtered_credits_taken = {
-            type: self._credits_taken[type] for type in self._credits_taken if self._required_credits[type] != self._credits_taken[type]}
+        filtered_credits_taken = filter_credits_taken()
         for type, sack in zip(filtered_credits_taken, sacks):
             self._credits_taken[type] += sum(item[1] for item in sack)
+        filtered_credits_taken = filter_credits_taken()  # Continue checkings this
+
+        # Check what happens if we have more than 1 type that doesn't have enough credits
+        for type in cycle(filtered_credits_taken):
+            if len(courses_that_didnt_fit) != 0:
+                self._credits_taken[type] += courses_that_didnt_fit.popitem()[0].get_points()
+            else:
+                break
+
+    def stam(self) -> None:
+
+        course_items: list[tuple[SpecialityCourse, float]] = [(course, course.get_points())
+                                                              for course in self._shared_courses]
+        while len(course_items) != 0:
+            current_course = course_items.pop()
+            courses_that_didnt_fit: dict[Course, None] = {}
+
+            print(f'Before appending, the list is: {courses_that_didnt_fit}')
+            print(f'Before appending, the item is: {current_course[0]}')
+            courses_that_didnt_fit[current_course[0]] = None
+            print(f'After appending, the list is: {courses_that_didnt_fit}')
+            print(f'After appending, the item is: {current_course[0]}')
+            course_items.remove(current_course)
+            if len(course_items) == len(courses_that_didnt_fit):
+                break
+
+        filtered_credits_taken = filter_credits_taken()
+        for type, sack in zip(filtered_credits_taken, sacks):
+            self._credits_taken[type] += sum(item[1] for item in sack)
+        self._credits_taken[CourseType.EXTERNAL] -= 1
+        filtered_credits_taken = filter_credits_taken()
+
+        for course, type in zip(filtered_credits_taken, cycle(self._credits_taken)):
+            self._credits_taken[type] += courses_that_didnt_fit.pop()[0].get_points()
 
     def update_required_data(self) -> None:
         required_points: tuple[int, int, int, int] = self._syllabus_db.get_required_points(
@@ -654,10 +706,10 @@ def extract_student_data_from_line(line: str):
 
 
 def test_reading_student():
-    # syllabusDB = SyllabusDB("courses_fulllist.csv")
-    syllabusDB = MagicMock()
+    syllabusDB = SyllabusDB("courses_fulllist.csv")
+    # syllabusDB = MagicMock()
     student = Student("student1.txt", syllabusDB)
-    student.read_student_data()
+    student.run_courses_check()
 
     pass
 
