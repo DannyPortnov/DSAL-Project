@@ -51,5 +51,9 @@ INVALID_COURSE_DATA_ERROR = "Course's data does not match Syllabus"
 
 COURSE_NUMBER_NOT_FOUND_ERROR = "Course number not found"
 
+MISSING_SPORT_POINTS_ERROR = "You haven't taken the correct amount of sport points"
+
+MISSING_GENERAL_POINTS_ERROR = "You haven't taken the correct amount of general points"
+
 INVALID_INTERSHIP_ERROR = "Invalid intership! You haven't taken both of the \
     intership courses (couldn't determine amount of required credits)"
