@@ -82,7 +82,7 @@ class Course:
         return False
 
     def __str__(self):
-        return f"Course: {self._number}, {self._name}, {self._points} points"
+        return f"{self._number}     {self._points}      {self._name}"
 
     def __repr__(self) -> str:
         return f"{self._name}"
