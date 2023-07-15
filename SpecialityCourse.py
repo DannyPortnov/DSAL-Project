@@ -47,8 +47,8 @@ class SpecialityCourse(Course):
     #     return self._devices
 
     # we need to assume that each computer's course include: (חומרה) or (תוכנה) in it's name
-    def check_if_hw_sw(self) -> Optional[ComputersRequiredCourseType]:
-        for course_type in ComputersRequiredCourseType:
+    def check_if_hw_sw(self) -> Optional[ComputersCourseType]:
+        for course_type in ComputersCourseType:
             if course_type.value in self._name:
                 return course_type
         return None
