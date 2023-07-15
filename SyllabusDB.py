@@ -87,7 +87,8 @@ class SyllabusDB:
         required_courses_amount = self._must_courses[speciality_type][final_project]
         if speciality == Speciality.COMPUTERS:
             required_courses = (required_courses_amount//2,
-                                required_courses_amount//2)
+                                required_courses_amount//2,
+                                required_courses_amount)
         else:
             required_courses = (required_courses_amount,)
         return required_courses
