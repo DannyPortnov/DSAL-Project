@@ -24,7 +24,7 @@ class Student:
         self._sport_points: int = None
 
         # holds the type of internship that the student chose
-        self._internship_type: Interships = Interships.INVALID
+        self._internship_type: Optional[Interships] = None
 
         # store the minimum points in order to finish the degree
         self._required_credits: dict[CourseType, float] = {
@@ -35,9 +35,9 @@ class Student:
         # self._required_external_points: int = None
 
         # TODO: maybe to change the way we store this data
-        # store the minimum number of required courses the student need to take in major and minor specialities
-        self._required_speciality_must_courses_count: dict[CourseType, int |
-                                                           dict[ComputersRequiredCourseType, int]] = {
+        # store the required number of must courses the student need to take in major and minor specialities
+        self._spc_must_courses_req: dict[CourseType, int |
+                                         dict[ComputersCourseType, int]] = {
             CourseType.MAJOR: 0,
             CourseType.MINOR: 0
         }
@@ -45,9 +45,9 @@ class Student:
         # calculate the amount of points the student got
         self._credits_taken: dict[CourseType, float] = {type: 0 for type in CourseType}
 
-        # count how many required speciality courses the student took
-        self._speciality_must_courses_count_taken: dict[CourseType, int |
-                                                        dict[ComputersRequiredCourseType, int]] = {
+        # count how many must speciality courses the student took
+        self._spc_must_courses_taken: dict[CourseType, int |
+                                           dict[ComputersCourseType, int]] = {
             CourseType.MAJOR: 0,
             CourseType.MINOR: 0
         }
@@ -85,19 +85,19 @@ class Student:
         # TODO: Find out if we need to check if the major is valid
         self._major = Speciality[major.upper()]
         if self._major == Speciality.COMPUTERS:
-            self._speciality_must_courses_count_taken[CourseType.MAJOR] = {
-                ComputersRequiredCourseType.SW: 0, ComputersRequiredCourseType.HW: 0}
-            self._required_speciality_must_courses_count[CourseType.MAJOR] = {
-                ComputersRequiredCourseType.SW: 0, ComputersRequiredCourseType.HW: 0}
+            self._spc_must_courses_taken[CourseType.MAJOR] = {
+                ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
+            self._spc_must_courses_req[CourseType.MAJOR] = {
+                ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
 
     def set_minor(self, minor: str) -> None:
         # TODO: Find out if we need to check if the minor is valid
         self._minor = Speciality[minor.upper()]
         if self._minor == Speciality.COMPUTERS:
-            self._speciality_must_courses_count_taken[CourseType.MINOR] = {
-                ComputersRequiredCourseType.SW: 0, ComputersRequiredCourseType.HW: 0}
-            self._required_speciality_must_courses_count[CourseType.MINOR] = {
-                ComputersRequiredCourseType.SW: 0, ComputersRequiredCourseType.HW: 0}
+            self._spc_must_courses_taken[CourseType.MINOR] = {
+                ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
+            self._spc_must_courses_req[CourseType.MINOR] = {
+                ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
 
     def set_general_points(self, general_points: str) -> None:
         self._general_points = int(general_points)
@@ -144,8 +144,7 @@ class Student:
                         self._speciality_courses[speciality_type][course_type_in_speciality].remove(
                             course)
                     elif course in self._speciality_courses[speciality_type]:
-                        self._speciality_courses[speciality_type].remove(
-                            course)
+                        self._speciality_courses[speciality_type].remove(course)
 
         else:  # is mandatory course
             self._mandatory_courses.pop(course.get_number())
@@ -235,7 +234,7 @@ class Student:
             # if self._internship_type is None:
             self._internship_type = Interships.PROJECT
         else:
-            self._internship_type = Interships.INVALID  # TODO: maybe raise an exception
+            return INVALID_INTERSHIP_ERROR
         self.update_required_data()
         if self._internship_type == Interships.INDUSTRY:
             del self._required_credits[CourseType.MINOR]
@@ -255,8 +254,8 @@ class Student:
         self._credits_taken[CourseType.MANDATORY] = sum(
             course.get_points() for course in self._mandatory_courses.values()) + self._sport_points + self._general_points
 
-    def get_intersecting_courses(self, course_type_in_minor: SpecialityCourseType,
-                                 course_type_in_major: SpecialityCourseType) -> set[SpecialityCourse]:
+    def get_intersecting_courses(self, minor_course_type: SpecialityCourseType,
+                                 major_course_type: SpecialityCourseType) -> set[SpecialityCourse]:
         """
             Returns the common speciality courses between major and minor based on the specified types.
 
@@ -267,10 +266,10 @@ class Student:
             Returns:
                 `set[SpecialityCourse]`: The intersection of speciality courses based on the specified types.
         """
-        major_courses = self._speciality_courses[CourseType.MAJOR][course_type_in_major]
+        major_courses = self._speciality_courses[CourseType.MAJOR][major_course_type]
         if CourseType.MINOR not in self._speciality_courses:
             return set(major_courses)
-        minor_courses = self._speciality_courses[CourseType.MINOR][course_type_in_minor]
+        minor_courses = self._speciality_courses[CourseType.MINOR][minor_course_type]
         return set(minor_courses).intersection(major_courses)
 
     # method for updating the student's point in speciality
@@ -278,35 +277,35 @@ class Student:
     def update_speciality_points(self):
         # update required courses in major and minor
         self.update_only_in_major_and_must_courses(
-            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                          course_type_in_minor=SpecialityCourseType.NA))  # required in major
+            self.get_intersecting_courses(major_course_type=SpecialityCourseType.REQUIRED,
+                                          minor_course_type=SpecialityCourseType.NA))  # required in major
         if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
             self.update_only_in_minor_and_must_courses(
-                self.get_intersecting_courses(course_type_in_minor=SpecialityCourseType.REQUIRED,
-                                              course_type_in_major=SpecialityCourseType.NA))  # required in minor
+                self.get_intersecting_courses(minor_course_type=SpecialityCourseType.REQUIRED,
+                                              major_course_type=SpecialityCourseType.NA))  # required in minor
             self.update_major_must_minor_optional_courses(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                              course_type_in_minor=SpecialityCourseType.OPTIONAL))   # required in major
+                self.get_intersecting_courses(major_course_type=SpecialityCourseType.REQUIRED,
+                                              minor_course_type=SpecialityCourseType.OPTIONAL))   # required in major
             self.update_minor_must_major_optional_courses(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
-                                              course_type_in_minor=SpecialityCourseType.REQUIRED))   # required in minor
+                self.get_intersecting_courses(major_course_type=SpecialityCourseType.OPTIONAL,
+                                              minor_course_type=SpecialityCourseType.REQUIRED))   # required in minor
             self.update_major_must_minor_must_courses(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.REQUIRED,
-                                              course_type_in_minor=SpecialityCourseType.REQUIRED))     # required in major or minor
+                self.get_intersecting_courses(major_course_type=SpecialityCourseType.REQUIRED,
+                                              minor_course_type=SpecialityCourseType.REQUIRED))     # required in major or minor
 
         # update external points
         self.update_external_points()
 
         # update Choice courses in major only and minor only
         self._update_speciality_optional_courses_only(
-            self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
-                                          course_type_in_minor=SpecialityCourseType.NA), CourseType.MAJOR)  # required in major
+            self.get_intersecting_courses(major_course_type=SpecialityCourseType.OPTIONAL,
+                                          minor_course_type=SpecialityCourseType.NA), CourseType.MAJOR)  # required in major
         if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
             self._update_speciality_optional_courses_only(
-                self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.NA,
-                                              course_type_in_minor=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
-        self._shared_courses += self.get_intersecting_courses(course_type_in_major=SpecialityCourseType.OPTIONAL,
-                                                              course_type_in_minor=SpecialityCourseType.OPTIONAL)  # Add shared optional courses to shared courses
+                self.get_intersecting_courses(major_course_type=SpecialityCourseType.NA,
+                                              minor_course_type=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
+        self._shared_courses += self.get_intersecting_courses(major_course_type=SpecialityCourseType.OPTIONAL,
+                                                              minor_course_type=SpecialityCourseType.OPTIONAL)  # Add shared optional courses to shared courses
         # at this point, we check the following requirements:
         # 1. we checked the required courses requirements in major and minor and calculated it accordingly.
         # 2. we calculated the optional courses that are available in major only and minor only accordingly.
@@ -329,7 +328,7 @@ class Student:
 
     #
     def update_only_in_major_and_must_courses(
-            self, only_in_major_and_must: set[SpecialityCourse]) -> None:
+            self, only_major_must: set[SpecialityCourse]) -> None:
         """ 
             Update the points of the courses that are required in the major but not available in the minor.
             This method filters the speciality courses that are required only in the major speciality
@@ -338,7 +337,7 @@ class Student:
             the required major points, the excess points are added to the external points.
         """
 
-        for course in only_in_major_and_must:
+        for course in only_major_must:
             #     check if the course is MUST in Hardware or Software
             #     update a counter for amount of HW/SW courses that was taken
             # we can check if the course belongs to HW or SW
@@ -346,12 +345,13 @@ class Student:
                 if self._major == Speciality.COMPUTERS:
                     # we need to assume that each computers' course name's indicate if it's HW or SW
                     if (is_hw_sw := course.check_if_hw_sw()) is not None:
-                        self._speciality_must_courses_count_taken[CourseType.MAJOR][is_hw_sw] += 1
+                        self._spc_must_courses_taken[CourseType.MAJOR][is_hw_sw] += 1
+                        self._spc_must_courses_taken[CourseType.MAJOR][ComputersCourseType.TOTAL] += 1
                     # else:
                     #     self._major_required_count += 1
                     # # self.update_major_minor_computers_required_points(course, self._major_required_count)
                 else:
-                    self._speciality_must_courses_count_taken[CourseType.MAJOR] += 1
+                    self._spc_must_courses_taken[CourseType.MAJOR] += 1
                 self._credits_taken[CourseType.MAJOR] += course.get_points()
             # this course is available only in this speciality, if we exceed the number of points
             # for this major, we will put the course in external_points
@@ -361,79 +361,76 @@ class Student:
     # update the points of minor's Must courses by using the courses that are available in the minor only
 
     def update_only_in_minor_and_must_courses(
-            self, only_in_minor_and_must: set[SpecialityCourse]) -> None:
-        for course in only_in_minor_and_must:
+            self, only_minor_must: set[SpecialityCourse]) -> None:
+        for course in only_minor_must:
             if self._credits_taken[CourseType.MINOR] < self._required_credits[CourseType.MINOR]:
                 if self._minor == Speciality.COMPUTERS:
                     # we need to assume that each computers' course name's indicate if it's HW or SW
                     if (is_hw_sw := course.check_if_hw_sw()) is not None:
-                        self._speciality_must_courses_count_taken[CourseType.MINOR][is_hw_sw] += 1
+                        self._spc_must_courses_taken[CourseType.MINOR][is_hw_sw] += 1
+                        self._spc_must_courses_taken[CourseType.MINOR][ComputersCourseType.TOTAL] += 1
                     # else:
                     #     self._required_count[SpecialityType.MINOR] += 1
                     # self.update_major_minor_computers_required_points(course, self._required_count[SpecialityType.MINOR])
                 else:
-                    self._speciality_must_courses_count_taken[CourseType.MINOR] += 1
+                    self._spc_must_courses_taken[CourseType.MINOR] += 1
                 self._credits_taken[CourseType.MINOR] += course.get_points()
             # this course is available only in this speciality, if we exceed the number of points
             # for this minor, we will put the course in external_points
             else:
                 self._credits_taken[CourseType.EXTERNAL] += course.get_points()
 
-    # update the major points if it doesn't have enough required courses
+    def _update_must_credit_taken(
+        self, course_type: CourseType,
+            speciality: Speciality, courses: set[SpecialityCourse]) -> None:
+        """
+        Check if the student has taken enough required courses in the major.
+        """
+        max_computers_additional_courses: int = 0
+        for course in courses:
 
-    def update_major_must_minor_optional_courses(
-            self, must_in_major_and_optional_in_minor: set[SpecialityCourse]) -> None:
-        for course in must_in_major_and_optional_in_minor:
-            # major doesn't have enough required courses, and student didn't exceed amount of major points
-            if self._major == Speciality.COMPUTERS:
+            if speciality == Speciality.COMPUTERS:
+                if course_type == CourseType.MINOR:
+                    max_computers_additional_courses = 1
                 is_hw_sw = course.check_if_hw_sw()
-
-                # we need to assume that each computers' course name's indicate if it's HW or SW
-
                 if is_hw_sw is not None:
-                    # TODO: change the number to constant, computers need at least 2 HW and 2 SW courses if it's major
-                    if (self._speciality_must_courses_count_taken[CourseType.MAJOR][is_hw_sw] < 2
-                            and self._credits_taken[CourseType.MAJOR] < self._required_credits[CourseType.MAJOR]):
-                        self._speciality_must_courses_count_taken[CourseType.MAJOR][is_hw_sw] += 1
-                        self._credits_taken[CourseType.MAJOR] += course.get_points()
+                    if (self._spc_must_courses_taken[course_type][is_hw_sw] <
+                            self._spc_must_courses_req[course_type][is_hw_sw] +
+                        max_computers_additional_courses
+                        and self._spc_must_courses_taken[course_type][ComputersCourseType.TOTAL] <
+                            self._spc_must_courses_req[course_type][ComputersCourseType.TOTAL] +
+                            max_computers_additional_courses
+                            and self._credits_taken[course_type] < self._required_credits[course_type]):
+                        self._spc_must_courses_taken[course_type][is_hw_sw] += 1
+                        self._spc_must_courses_taken[course_type][ComputersCourseType.TOTAL] += 1
+                        self._credits_taken[course_type] += course.get_points()
                     else:
                         # major have enough required courses, we will decide later where to put this course by checking it's credit points
                         self._shared_courses.append(course)
             else:
-                if (self._speciality_must_courses_count_taken[CourseType.MAJOR] < self._required_speciality_must_courses_count[CourseType.MAJOR]
-                        and self._credits_taken[CourseType.MAJOR] < self._required_credits[CourseType.MAJOR]):
-                    self._speciality_must_courses_count_taken[CourseType.MAJOR] += 1
-                    self._credits_taken[CourseType.MAJOR] += course.get_points()
+                if (self._spc_must_courses_taken[course_type] < self._spc_must_courses_req[course_type]
+                        and self._credits_taken[course_type] < self._required_credits[course_type]):
+                    self._spc_must_courses_taken[course_type] += 1
+                    self._credits_taken[course_type] += course.get_points()
                 else:
                     # major have enough required courses, we will decide later where to put this course by checking it's credit points
                     self._shared_courses.append(course)
 
+    # update the major points if it doesn't have enough required courses
+
+    def update_major_must_minor_optional_courses(
+            self, major_must_minor_optional: set[SpecialityCourse]) -> None:
+        # major doesn't have enough required courses, and student didn't exceed amount of major points
+        self._update_must_credit_taken(
+            CourseType.MAJOR, self._major, major_must_minor_optional)
+
     # update the minor points if it doesn't have enough required courses
 
     def update_minor_must_major_optional_courses(
-            self, must_in_minor_and_optional_in_major: set[SpecialityCourse]) -> None:
-        for course in must_in_minor_and_optional_in_major:
-            # minor doesn't have enough required courses, and student didn't exceed amount of minor points
-            if self._minor == Speciality.COMPUTERS:
-                is_hw_sw = course.check_if_hw_sw()
-                if is_hw_sw is not None:
-                    # TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
-                    # TODO: NEED TO CHECK ALSO IF REACHED TO 3 MUST COURSES IN MINOR
-                    if (self._speciality_must_courses_count_taken[CourseType.MINOR][is_hw_sw] < 1
-                            and self._credits_taken[CourseType.MINOR] < self._required_credits[CourseType.MINOR]):
-                        self._speciality_must_courses_count_taken[CourseType.MINOR][is_hw_sw] += 1
-                        self._credits_taken[CourseType.MINOR] += course.get_points()
-                    else:
-                        self._shared_courses.append(course)
-                        # major have enough required courses, we will decide later where to put this course by checking it's credit points
-            else:
-                if (self._speciality_must_courses_count_taken[CourseType.MINOR] < self._required_speciality_must_courses_count[CourseType.MINOR]
-                        and self._credits_taken[CourseType.MINOR] < self._required_credits[CourseType.MINOR]):
-                    self._speciality_must_courses_count_taken[CourseType.MINOR] += 1
-                    self._credits_taken[CourseType.MINOR] += course.get_points()
-                else:
-                    self._shared_courses.append(course)
-                    # minor have enough required courses, we will decide later where to put this course by checking it's credit points
+            self, minor_must_major_optional: set[SpecialityCourse]) -> None:
+        # minor doesn't have enough required courses, and student didn't exceed amount of minor points
+        self._update_must_credit_taken(
+            CourseType.MINOR, self._minor, minor_must_major_optional)
 
     # update major and minor points by checking if they have enough required courses.
 
@@ -447,14 +444,16 @@ class Student:
                 if is_hw_sw is not None:
                     # TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
                     # major doesn't have enough required courses, minor does have
-                    if (self._speciality_must_courses_count_taken[CourseType.MAJOR][is_hw_sw] < 2
+                    if (self._spc_must_courses_taken[CourseType.MAJOR][is_hw_sw] <
+                        self._spc_must_courses_req[CourseType.MAJOR][is_hw_sw]
                             and self._credits_taken[CourseType.MINOR] >= self._required_credits[CourseType.MINOR]):
-                        self._speciality_must_courses_count_taken[CourseType.MAJOR][is_hw_sw] += 1
+                        self._spc_must_courses_taken[CourseType.MAJOR][is_hw_sw] += 1
                         self._credits_taken[CourseType.MAJOR] += course.get_points()
                     # minor doesn't have enough required courses, major does have
-                    elif (self._speciality_must_courses_count_taken[CourseType.MAJOR][is_hw_sw] >= 2
+                    elif (self._spc_must_courses_taken[CourseType.MAJOR][is_hw_sw] >=
+                          self._spc_must_courses_req[CourseType.MAJOR][is_hw_sw]
                           and self._credits_taken[CourseType.MINOR] < self._required_credits[CourseType.MINOR]):
-                        self._speciality_must_courses_count_taken[CourseType.MINOR] += 1
+                        self._spc_must_courses_taken[CourseType.MINOR] += 1
                         self._credits_taken[CourseType.MINOR] += course.get_points()
                     # major and minor have enough required courses, we will decide later
                     # where to put this course by checking it's credit points
@@ -468,14 +467,17 @@ class Student:
                     # TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
                     # major doesn't have enough required courses, minor does have
                     # TODO: NEED TO CHECK ALSO IF REACHED TO 3 MUST COURSES IN MINOR
-                    if (self._speciality_must_courses_count_taken[CourseType.MAJOR] < self._required_speciality_must_courses_count[CourseType.MAJOR]
-                            and self._speciality_must_courses_count_taken[CourseType.MINOR][is_hw_sw] >= 1):
-                        self._speciality_must_courses_count_taken[CourseType.MAJOR] += 1
+                    if (self._spc_must_courses_taken[CourseType.MAJOR] <
+                        self._spc_must_courses_req[CourseType.MAJOR]
+                            and self._spc_must_courses_taken[CourseType.MINOR][is_hw_sw] >=
+                            self._spc_must_courses_req[CourseType.MINOR][is_hw_sw]):
+                        self._spc_must_courses_taken[CourseType.MAJOR] += 1
                         self._credits_taken[CourseType.MAJOR] += course.get_points()
                     # minor doesn't have enough required courses, major does have
-                    elif (self._speciality_must_courses_count_taken[CourseType.MAJOR] >= self._required_speciality_must_courses_count[CourseType.MAJOR]
-                          and self._speciality_must_courses_count_taken[CourseType.MINOR][is_hw_sw] < 1):
-                        self._speciality_must_courses_count_taken[CourseType.MINOR][is_hw_sw] += 1
+                    elif (self._spc_must_courses_taken[CourseType.MAJOR] >= self._spc_must_courses_req[CourseType.MAJOR]
+                          and self._spc_must_courses_taken[CourseType.MINOR][is_hw_sw] <
+                          self._spc_must_courses_req[CourseType.MINOR][is_hw_sw]):
+                        self._spc_must_courses_taken[CourseType.MINOR][is_hw_sw] += 1
                         self._credits_taken[CourseType.MINOR] += course.get_points()
                     # major and minor have enough required courses, we will decide later
                     # where to put this course by checking it's credit points
@@ -484,19 +486,19 @@ class Student:
 
             else:
                 # major doesn't have enough required courses, minor does have
-                if (self._speciality_must_courses_count_taken[CourseType.MAJOR] < self._required_speciality_must_courses_count[CourseType.MAJOR]
-                        and self._speciality_must_courses_count_taken[CourseType.MINOR] >= self._required_speciality_must_courses_count[CourseType.MINOR]):
-                    self._speciality_must_courses_count_taken[CourseType.MAJOR] += 1
+                if (self._spc_must_courses_taken[CourseType.MAJOR] < self._spc_must_courses_req[CourseType.MAJOR]
+                        and self._spc_must_courses_taken[CourseType.MINOR] >= self._spc_must_courses_req[CourseType.MINOR]):
+                    self._spc_must_courses_taken[CourseType.MAJOR] += 1
                     self._credits_taken[CourseType.MAJOR] += course.get_points()
                 # minor doesn't have enough required courses, major does have
-                elif (self._speciality_must_courses_count_taken[CourseType.MAJOR] >= self._required_speciality_must_courses_count[CourseType.MAJOR]
-                      and self._speciality_must_courses_count_taken[CourseType.MINOR] < self._required_speciality_must_courses_count[CourseType.MINOR]):
-                    self._speciality_must_courses_count_taken[CourseType.MINOR] += 1
+                elif (self._spc_must_courses_taken[CourseType.MAJOR] >= self._spc_must_courses_req[CourseType.MAJOR]
+                      and self._spc_must_courses_taken[CourseType.MINOR] < self._spc_must_courses_req[CourseType.MINOR]):
+                    self._spc_must_courses_taken[CourseType.MINOR] += 1
                     self._credits_taken[CourseType.MINOR] += course.get_points()
                 # minor and major doesn't have enough required courses, by default we will update the required course in the major
-                elif (self._speciality_must_courses_count_taken[CourseType.MAJOR] < self._required_speciality_must_courses_count[CourseType.MAJOR]
-                      and self._speciality_must_courses_count_taken[CourseType.MINOR] < self._required_speciality_must_courses_count[CourseType.MINOR]):
-                    self._speciality_must_courses_count_taken[CourseType.MINOR] += 1
+                elif (self._spc_must_courses_taken[CourseType.MAJOR] < self._spc_must_courses_req[CourseType.MAJOR]
+                      and self._spc_must_courses_taken[CourseType.MINOR] < self._spc_must_courses_req[CourseType.MINOR]):
+                    self._spc_must_courses_taken[CourseType.MINOR] += 1
                     self._credits_taken[CourseType.MINOR] += course.get_points()
                 # major and minor have enough required courses, we will decide later
                 # where to put this course by checking it's credit points
@@ -524,9 +526,10 @@ class Student:
 
     def update_major_minor_shared_courses_points(self) -> None:
 
-        def filter_credits_taken() -> dict[CourseType, int]:
+        def filter_credits_taken() -> dict[CourseType, float]:
             return {
-                type: self._credits_taken[type] for type in self._credits_taken if self._required_credits[type] > self._credits_taken[type]}
+                type: self._credits_taken[type] for type in self._credits_taken if (
+                    self._required_credits[type] > self._credits_taken[type])}
 
         if len(self._shared_courses) == 0:
             return
@@ -575,46 +578,20 @@ class Student:
             else:
                 break
 
-    def stam(self) -> None:
-
-        course_items: list[tuple[SpecialityCourse, float]] = [(course, course.get_points())
-                                                              for course in self._shared_courses]
-        while len(course_items) != 0:
-            current_course = course_items.pop()
-            courses_that_didnt_fit: dict[Course, None] = {}
-
-            print(f'Before appending, the list is: {courses_that_didnt_fit}')
-            print(f'Before appending, the item is: {current_course[0]}')
-            courses_that_didnt_fit[current_course[0]] = None
-            print(f'After appending, the list is: {courses_that_didnt_fit}')
-            print(f'After appending, the item is: {current_course[0]}')
-            course_items.remove(current_course)
-            if len(course_items) == len(courses_that_didnt_fit):
-                break
-
-        filtered_credits_taken = filter_credits_taken()
-        for type, sack in zip(filtered_credits_taken, sacks):
-            self._credits_taken[type] += sum(item[1] for item in sack)
-        self._credits_taken[CourseType.EXTERNAL] -= 1
-        filtered_credits_taken = filter_credits_taken()
-
-        for course, type in zip(filtered_credits_taken, cycle(self._credits_taken)):
-            self._credits_taken[type] += courses_that_didnt_fit.pop()[0].get_points()
-
     def update_required_data(self) -> None:
         required_points: tuple[int, int, int, int] = self._syllabus_db.get_required_points(
             self._internship_type)
-        required_courses_needed: tuple[int, int] = self._syllabus_db.get_total_required_courses(
+        required_courses_needed: tuple = self._syllabus_db.get_total_required_courses(
             self._internship_type, self._major, self._minor)
         for credit_type, credit in zip(self._required_credits.keys(), required_points):
             self._required_credits[credit_type] = credit
-        for course_type, course_count in zip(self._required_speciality_must_courses_count.keys(), required_courses_needed):
-            if isinstance(self._required_speciality_must_courses_count[course_type], dict):
-                for course_type_and_amount in zip(ComputersRequiredCourseType.__members__.values(), course_count):
-                    self._required_speciality_must_courses_count[course_type][
+        for course_type, course_count in zip(self._spc_must_courses_req.keys(), required_courses_needed):
+            if isinstance(self._spc_must_courses_req[course_type], dict):
+                for course_type_and_amount in zip(ComputersCourseType.__members__.values(), course_count):
+                    self._spc_must_courses_req[course_type][
                         course_type_and_amount[0]] = course_type_and_amount[1]
             else:
-                self._required_speciality_must_courses_count[course_type] = course_count[0]
+                self._spc_must_courses_req[course_type] = course_count[0]
 
     # check if student has enough mandatory points
     # TODO: maybe change the parameters that this method returns
@@ -635,24 +612,30 @@ class Student:
 
     # check if the students is allowed to finish the degree
 
-    def print_invalid_courses(self) -> None:
+    def _get_invalid_courses(self) -> Optional[str]:
         if len(self._invalid_courses) > 0:
-            print(self._invalid_courses)
+            messages = ""
+            for message in self._invalid_courses.values():
+                messages += message + "\n"
+            return messages
 
     def _validate_must_courses(self) -> str:
-        """Check if the student took all the required must courses, in minor and major.
-        """
+        """Check if the student took all the required must courses, in minor and major."""
         message = ""
-        for course_type, required_must_courses in self._required_speciality_must_courses_count.items():
-            taken_must_courses_count = self._speciality_must_courses_count_taken[course_type]
-            if isinstance(required_must_courses, dict):
-                for computers_must_course_type, required_must_course_count in required_must_courses.items():
-                    taken_must_courses_count = self._speciality_must_courses_count_taken[
-                        course_type][computers_must_course_type]
-                    if taken_must_courses_count < required_must_course_count:
-                        message += f"You need to take \
-                                {required_must_course_count - taken_must_courses_count} \
-                                      more {computers_must_course_type.name.lower()} courses in {course_type.name.lower()}\n"
+        # TODO: Fix in case computers is minor
+        for course_type, required_must_courses in self._spc_must_courses_req.items():
+            taken_must_courses_count = self._spc_must_courses_taken[course_type]
+            if isinstance(required_must_courses, dict):  # Computers
+                taken_in_computers = taken_must_courses_count[ComputersCourseType.TOTAL]
+                required_must_course_count = self._spc_must_courses_req[course_type]
+                if taken_in_computers < required_must_course_count[ComputersCourseType.TOTAL]:
+                    message += "You need to take "
+                    message += f"{required_must_course_count[ComputersCourseType.TOTAL] - taken_in_computers}"
+                    message += f" more must {course_type.name.lower()} courses"
+                    message += f" (you need at least {required_must_course_count[ComputersCourseType.HW]}"
+                    message += f" {ComputersCourseType.HW.name.lower()}"
+                    message += f" and {required_must_course_count[ComputersCourseType.SW]}"
+                    message += f" {ComputersCourseType.SW.name.lower()} courses) \n"
             else:
                 if taken_must_courses_count < required_must_courses:
                     message += f"You need to take {required_must_courses - taken_must_courses_count} more must {course_type.name.lower()} courses\n"
@@ -660,10 +643,15 @@ class Student:
 
     def run_courses_check(self) -> str:
         self._check_all_courses_were_finished_properly()
+        messages = self._get_invalid_courses()
+        if messages is None:
+            messages = ""
         self.update_mandatory_points()
-        self.update_internship_type()
+        intership_message = self.update_internship_type()
+        if intership_message is not None:
+            return intership_message
         self.update_speciality_points()
-        messages = self._validate_must_courses()
+        messages += self._validate_must_courses()
         return messages + self.validate_credit()
         # TODO: need to check if the amount of points matches the requirements
         # if self._required_mandatory_points < self._mandatory_points:
