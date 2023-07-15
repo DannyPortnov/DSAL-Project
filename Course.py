@@ -61,13 +61,17 @@ class Course:
     def get_number(self):
         return self._number
 
+    def _format_pre_course_error(self, pre_course: Course):
+        """Returns a formatted error message for a pre course that hasn't been done"""
+        return f"You haven't done {self.get_name()}'s ({self.get_number()}) pre-course, {pre_course.get_name()} ({pre_course.get_number()})"
+
     def is_finished_properly(self) -> tuple[bool, str | None]:
         """Checks if all the pre courses were taken, 
         this allows to determine if a course was finished properly"""
         # courses = [course for C in self._pre_courses if not course.was_taken()]
-        for course in self._pre_courses.values():
-            if not course.was_taken():
-                return False, format_pre_course_error(self, course)
+        for pre_course in self._pre_courses.values():
+            if not pre_course.was_taken():
+                return False, self._format_pre_course_error(pre_course)
         return True, None
 
     # validate a course by checking it's points, name and number
