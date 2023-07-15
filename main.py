@@ -56,23 +56,20 @@ def generate_db(file):
 def test_invalid_intership() -> None:
     student = init_student_and_db(
         "student with invalid intership.txt")
-    messages = student.run_courses_check()
-    print(messages)
+    student.generate_result_file()
 
 
 def test_minor_computers() -> None:
 
     student = init_student_and_db("minor computers.txt")
-    messages = student.run_courses_check()
-    print(messages)
+    student.generate_result_file()
 
 
 def test_2_specialities_with_1_missing_required_in_minor() -> None:
 
     student = init_student_and_db(
         "Student with 2 specialties but missing 1 required in minor.txt")
-    messages = student.run_courses_check()
-    print(messages)
+    student.generate_result_file()
 
 
 def init_student_and_db(student_file: str) -> Student:
@@ -81,11 +78,13 @@ def init_student_and_db(student_file: str) -> Student:
     return student
 
 
+def valid_student(init_student_and_db):
+    student = init_student_and_db("student1.txt")
+    student.generate_result_file()
+
+
 if __name__ == "__main__":
-    # test_2_specialities_with_1_missing_required_in_minor()
-    test_minor_computers()
+    test_2_specialities_with_1_missing_required_in_minor()
+    # test_minor_computers()
     # test_invalid_intership()
-    # student = init_student_and_db("student1.txt")
-    # student.print_invalid_courses()
-    # messages = student.run_courses_check()
-    # print(messages)
+    # valid_student(init_student_and_db)
