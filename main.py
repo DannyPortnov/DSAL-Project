@@ -83,8 +83,14 @@ def valid_student():
     student.generate_result_file()
 
 
+def invalid_major():
+    student = init_student_and_db("invalid major.txt")
+    student.generate_result_file()
+
+
 if __name__ == "__main__":
-    test_2_specialities_with_1_missing_required_in_minor()
+    # test_2_specialities_with_1_missing_required_in_minor()
     # test_minor_computers()
+    invalid_major()
     # test_invalid_intership()
     # valid_student()

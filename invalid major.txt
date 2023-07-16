@@ -1,7 +1,7 @@
 # this is a comment
 Student name: Ofer Tzur
 Student Id: 111111111
-Major: Signals
+Major: Signal
 Minor:  Computers  # Computer or Signal or Devices or NA
 General Points: 6
 Sport Points: 1
