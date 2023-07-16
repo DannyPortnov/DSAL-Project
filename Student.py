@@ -310,7 +310,7 @@ class Student:
                 self.get_intersecting_courses(major_course_type=SpecialityCourseType.NA,
                                               minor_course_type=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
             self._shared_courses += self.get_intersecting_courses(major_course_type=SpecialityCourseType.OPTIONAL,
-                                                              minor_course_type=SpecialityCourseType.OPTIONAL)  # Add shared optional courses to shared courses
+                                                                  minor_course_type=SpecialityCourseType.OPTIONAL)  # Add shared optional courses to shared courses
         else:  # If doing industry internship, go over all the courses that aren't available in the major speciality
             self._update_speciality_optional_courses_only(
                 self._speciality_courses[CourseType.MAJOR][SpecialityCourseType.NA], CourseType.MAJOR)
@@ -688,6 +688,7 @@ class Student:
         status = "Approved" if len(messages) == 0 else "Not approved"
         total_points = sum(self._credits_taken.values())
         specialization_points = total_points - self._credits_taken[CourseType.MANDATORY]
+        # TODO: after Specialization points, print the amount of points in each specialization
         file_name = self._name + "_" + self._id + "_output" + ".txt"
         with open(file_name, "w", encoding="utf-8") as result_file:
             result_file.write("Student name: " + self._name + "\n")

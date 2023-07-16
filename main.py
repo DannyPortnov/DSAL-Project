@@ -78,7 +78,7 @@ def init_student_and_db(student_file: str) -> Student:
     return student
 
 
-def valid_student(init_student_and_db):
+def valid_student():
     student = init_student_and_db("student1.txt")
     student.generate_result_file()
 
@@ -87,4 +87,4 @@ if __name__ == "__main__":
     test_2_specialities_with_1_missing_required_in_minor()
     # test_minor_computers()
     # test_invalid_intership()
-    # valid_student(init_student_and_db)
+    # valid_student()
