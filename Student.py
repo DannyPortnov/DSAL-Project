@@ -534,6 +534,7 @@ class Student:
         # TODO: make prettier later :)
         for course in self._speciality_courses[CourseType.EXTERNAL]:
             self._credits_taken[CourseType.EXTERNAL] += course.get_points()
+            self._remove_speciality_course(course)
 
     # here we update points of major, minor and external specialities by using the rest of the courses that have left.
 
@@ -576,8 +577,6 @@ class Student:
                 continue
             courses_that_didnt_fit[current_course[0]] = None
             course_items.remove(current_course)
-            if len(course_items) == len(courses_that_didnt_fit):
-                break
 
         filtered_credits_taken = filter_credits_taken()
         for type, sack in zip(filtered_credits_taken, sacks):
@@ -721,9 +720,6 @@ def extract_course_data_from_line(line: str) -> tuple[int, float, str]:
         course_number = match.group(1)
         credit = match.group(2)
         name = match.group(3)
-        print("Course Number:", course_number)
-        print("Credit:", credit)
-        print("Name:", name)
     return int(course_number), float(credit), name
 
 
