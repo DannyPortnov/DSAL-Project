@@ -74,6 +74,8 @@ class Student:
         # key: course, value: why course is invalid
         self._invalid_courses: dict[Course | int, str] = {}
         # TODO: print somewhen the invalid courses
+        self._status: str = ""
+        self._invalid_major_or_minor: bool = False
         self.read_student_data()
 
     def set_name(self, name):
@@ -170,7 +172,7 @@ class Student:
             if not is_finished and reason_if_not is not None:
                 self.remove_from_courses(course, reason_if_not)
 
-    def read_student_data(self):
+    def read_student_data(self) -> None:
         with open(self._file_name, "r", encoding="utf-8") as file:
             # TODO: Put all of this in __init__ ?
             line = next(self._ignore_comments_and_empty_lines(file))
@@ -178,14 +180,24 @@ class Student:
             line = next(self._ignore_comments_and_empty_lines(file))
             self.set_id(extract_student_data_from_line(line))
             line = next(self._ignore_comments_and_empty_lines(file))
-            self.set_major(extract_student_data_from_line(line))
+            major_name_from_file = extract_student_data_from_line(line)
+            try:
+                self.set_major(major_name_from_file)
+            except KeyError:
+                self._status += f"Major name: '{major_name_from_file}' is not valid, expected: {'/'.join([str(e.name) for e in Speciality])} (case insensitive)"
             line = next(self._ignore_comments_and_empty_lines(file))
-            self.set_minor(extract_student_data_from_line(line))
+            minor_name_from_file = extract_student_data_from_line(line)
+            try:
+                self.set_minor(minor_name_from_file)
+            except KeyError:
+                self._status += f"Minor name: '{minor_name_from_file}' is not valid, expected: {'/'.join([str(e.name) for e in Speciality])} (case insensitive)"
             line = next(self._ignore_comments_and_empty_lines(file))
             self.set_general_points(extract_student_data_from_line(line))
             line = next(self._ignore_comments_and_empty_lines(file))
             self.set_sport_points(extract_student_data_from_line(line))
-
+            if len(self._status) != 0:
+                self._invalid_major_or_minor = True
+                return
             # When Generator depletes, next() returns None
             while (line := next(self._ignore_comments_and_empty_lines(file), None)) != None:
                 course_number, credit, name = extract_course_data_from_line(line)
@@ -214,13 +226,13 @@ class Student:
 
   # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit
 
-    def check_sport_points(self):
+    def check_sport_points(self) -> Optional[str]:
         if self._sport_points == self._syllabus_db.get_sport_points():
             return True
         return False
 
     # updates the type of internship that the student chose
-    def update_internship_type(self):
+    def update_internship_type(self) -> str:
         # check if project is internship in the idustry
         if (31054 in self._mandatory_courses) and (31055 in self._mandatory_courses):
             # if self._internship_type is None:
@@ -246,6 +258,7 @@ class Student:
             del self._credits_taken[CourseType.MINOR]
             # Move all minor courses to major
             del self._speciality_courses[CourseType.MINOR]
+        return ""
 
     def update_mandatory_points(self) -> str:
         # for course in self._mandatory_courses.values():
@@ -624,12 +637,12 @@ class Student:
 
     # check if the students is allowed to finish the degree
 
-    def _get_invalid_courses(self) -> Optional[str]:
+    def _get_invalid_courses(self) -> str:
+        messages = ""
         if len(self._invalid_courses) > 0:
-            messages = ""
             for message in self._invalid_courses.values():
                 messages += message + "\n"
-            return messages
+        return messages
 
     def _validate_must_courses(self) -> str:
         """Check if the student took all the required must courses, in minor and major."""
@@ -653,18 +666,19 @@ class Student:
                     message += f"You need to take {required_must_courses - taken_must_courses_count} more must {course_type.name.lower()} courses\n"
         return message
 
-    def run_courses_check(self) -> str:
+    def run_courses_check(self) -> None:
+        if len(self._status) != 0:
+            return
         self._check_all_courses_were_finished_properly()
-        messages = self._get_invalid_courses()
-        if messages is None:
-            messages = ""
-        messages += self.update_mandatory_points()
+        self._status += self._get_invalid_courses()
+        self._status += self.update_mandatory_points()
         intership_message = self.update_internship_type()
+        self._status += intership_message
         if intership_message is not None:
-            return intership_message
+            return
         self.update_speciality_points()
-        messages += self._validate_must_courses()
-        return messages + self.validate_credit()
+        self._status += self._validate_must_courses()
+        self._status += self.validate_credit()
         # TODO: need to check if the amount of points matches the requirements
         # if self._required_mandatory_points < self._mandatory_points:
 
@@ -683,8 +697,8 @@ class Student:
 
     def generate_result_file(self) -> None:
         """Generate a result file for the student."""
-        messages = self.run_courses_check()
-        status = "Approved" if len(messages) == 0 else "Not approved"
+        self.run_courses_check()
+        status = "Approved" if len(self._status) == 0 else "Not approved"
         total_points = sum(self._credits_taken.values())
         specialization_points = total_points - self._credits_taken[CourseType.MANDATORY]
         # TODO: after Specialization points, print the amount of points in each specialization
@@ -693,6 +707,10 @@ class Student:
             result_file.write("Student name: " + self._name + "\n")
             result_file.write("Student ID: " + self._id + "\n")
             result_file.write("Status: " + status + "\n")
+            if self._invalid_major_or_minor:
+                result_file.write("\nInvalid Arguments:\n")
+                result_file.write(self._status)
+                return
             result_file.write("Major: " + self._major.name + "\n")
             result_file.write("Minor: " + self._minor.name + "\n")
             if self._internship_type is not None:
@@ -707,9 +725,9 @@ class Student:
             result_file.write("# Course        Credit       CourseName\n")
             for course in self._all_courses.values():
                 result_file.write(str(course) + "\n")
-            if len(messages) > 0:
+            if len(self._status) > 0:
                 result_file.write("\nInvalid Arguments:\n")
-                result_file.write(messages)
+                result_file.write(self._status)
 
 
 def extract_course_data_from_line(line: str) -> tuple[int, float, str]:
