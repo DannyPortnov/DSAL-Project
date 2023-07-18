@@ -12,8 +12,8 @@ class Course:
     def __init__(self, number: int, name: str, points: float, is_must: str,
                  pre_courses: list[int], parallel_course: Optional[int]):
         self._name: str = name.strip()
-        self._number = number
-        self._points = points
+        self._number: int = number
+        self._points: float = points
         # is the course's condition must or choice
         self._set_condition(is_must)  # Sets self._is_must
         # hold the pre-courses that must be taken before this course
@@ -25,7 +25,7 @@ class Course:
         # in order to check if a student took a course or not- default value is false
         self._was_taken = False
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self._name
 
     def set_parallel_course(self, course: Course) -> None:
@@ -39,28 +39,28 @@ class Course:
 
     # set the condition of the course: must or choise
     # TODO: check why constant doesn't work here
-    def _set_condition(self, is_must: str):
+    def _set_condition(self, is_must: str) -> None:
         if is_must == "חובה":
             self._is_must = True
         self._is_must = False
 
-    def set_was_taken(self, was_taken: bool):
+    def set_was_taken(self, was_taken: bool) -> None:
         self._was_taken = was_taken
 
     # returns the condition of a course: must or choise
-    def is_mandatory(self):
+    def is_mandatory(self) -> bool:
         return self._is_must
 
-    def was_taken(self):
+    def get_was_taken(self) -> bool:
         """Returns True if the student took the course, False otherwise"""
         return self._was_taken
 
     # returns course's points
-    def get_points(self):
+    def get_points(self) -> float:
         return self._points
 
     # returns course's number
-    def get_number(self):
+    def get_number(self) -> int:
         return self._number
 
     def _format_missing_course_error(self, missing_course: Course, missing_course_type: str) -> str:
@@ -74,12 +74,12 @@ class Course:
         is_finished: bool = True
         message: str = ""
         for pre_course in self._pre_courses.values():
-            if not pre_course.was_taken():
+            if not pre_course.get_was_taken():
                 is_finished = False
                 message += self._format_missing_course_error(pre_course, "pre course")
         parallel_course = self.get_parallel_course()[1]
         if parallel_course is not None:
-            is_finished = not parallel_course.was_taken() and is_finished
+            is_finished = not parallel_course.get_was_taken() and is_finished
             message += self._format_missing_course_error(
                 parallel_course, "parallel course")
         # If disqualified, will change course to not taken
@@ -99,18 +99,8 @@ class Course:
         result += name_mismatch if name != self._name else ""
         return True, result
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self._number}     {self._points}      {self._name}"
 
     def __repr__(self) -> str:
         return f"{self._name}"
-
-
-# function that converts a condition's value to an actual word
-def number_to_condition(num: int):
-    if num == 1:
-        return SpecialityCourseType.REQUIRED
-    elif num == 2:
-        return SpecialityCourseType.OPTIONAL
-    else:
-        return None

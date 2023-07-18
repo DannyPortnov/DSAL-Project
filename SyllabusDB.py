@@ -15,7 +15,7 @@ class SyllabusDB:
     "Syllabus Data base Object Implementation"
 
     def __init__(self, file: str):
-        self._file_name = file
+        self._file_name: str = file
         # key: course number, value: course object
         self._mandatory_courses_list = []  # just for debug
         self._speciality_courses_list = []  # just for debug
@@ -107,8 +107,6 @@ class SyllabusDB:
             if match or is_empty_line == "":
                 continue
             else:
-                # number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course = extract_line(d)
-                # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
                 if line[4] == REQUIRED_COURSE_INDICATOR:
                     course = Course(number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
                                     pre_courses=self.get_courses_codes(line[8:12]),
@@ -136,11 +134,7 @@ class SyllabusDB:
                     self.get_course_by_number(parallel_course_num))
 
     def get_course_by_number(self, number: int) -> Course | SpecialityCourse:
-        """Returns a course object by its number. If the course is not found, raises a ValueError.
-        If no number is specified in the syllabus, returns None"""
-
-        # if number == '':
-        #     return None
+        """Returns a course object by its number. If the course is not found, raises a ValueError."""
 
         if number in self._mandatory_courses.keys():
             return self._mandatory_courses[number]
@@ -159,22 +153,7 @@ class SyllabusDB:
 
         raise ValueError(COURSE_NUMBER_NOT_FOUND_ERROR)
 
-    # def set_name(self, name):
-    #     self._name = name
-
-    # def set_id(self, id):
-    #     self._id = id
-
-    # def set_major(self, major):
-    #     self._major = major
-
-    # def set_minor(self, minor):
-    #     self._minor = minor
-
     # # TODO: maybe change the list to another data structure
-    # # add a course object to the stduent's list of courses
-    # def add_course(self, course):
-    #     self._courses.append(course)
 
 # need to get the pre_courses objects by using the pre courses list of strings
 
@@ -186,6 +165,14 @@ class SyllabusDB:
                 f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, computers={course._specialities[Speciality.COMPUTERS]}, signals={course._specialities[Speciality.SIGNALS]}, devices={course._specialities[Speciality.DEVICES]}, pre_courses_list={course._pre_courses}")
 
     def get_courses_codes(self, courses: list[str]) -> list[int]:
+        """ Parses line of strings from the file to a list of courses codes
+
+        Args:
+            courses (`list[str]`): Line read from the file
+
+        Returns:
+            `list[int]`: Courses codes. If all the line cells are empty, returns an empty list.
+        """
         courses_codes: list[int] = []
         for course_num in courses:
             if course_num != '':
@@ -193,5 +180,10 @@ class SyllabusDB:
         return courses_codes
 
     def get_course_code(self, course: str) -> Optional[int]:
-        if course != '':
-            return int(course)
+        return int(course) if course != '' else None
+
+
+if __name__ == "__main__":
+    file = "courses_fulllist.csv"
+    syllabus = SyllabusDB(file)
+    syllabus.print_db()
