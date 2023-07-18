@@ -1,5 +1,5 @@
 from io import TextIOWrapper
-from typing import Generator, Optional
+from typing import Generator, Optional, Union
 import re
 from Course import Course
 from SyllabusDB import SyllabusDB
@@ -109,7 +109,7 @@ class Student:
     def set_sport_points(self, sport_points: str) -> None:
         self._sport_points = int(sport_points)
 
-    def add_course(self, course: SpecialityCourse | Course) -> None:
+    def add_course(self, course: Union[SpecialityCourse, Course]) -> None:
         """ Add a course to the student's taken courses.
 
         Args:
@@ -219,15 +219,6 @@ class Student:
         for line in file:
             if not line.startswith("#") and line != '\n':
                 yield line.strip()
-
-    # def _resume_ignore_comments(self, file: Generator[str, None, None]):
-    #     for line in file:
-    #         if line.startswith("#") and contants.SEMESTER_LINE_INDICATOR in line:
-    #             yield True
-    #         elif not line.startswith("#"):
-    #             yield line.strip()
-
-  # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit
 
     def check_sport_points(self) -> Optional[str]:
         return self._sport_points == self._syllabus_db.get_sport_points()
@@ -715,7 +706,7 @@ class Student:
                 result_file.write("\nInvalid Arguments:\n")
                 result_file.write(self._status)
             if len(self._notifications) > 0:
-                result_file.write("\nNotifications:\n")
+                result_file.write("\n\nNotifications:\n")
                 result_file.write(self._notifications)
 
 

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Course import Course
 
-# from enum import StrEnum  # Assuming you have Python 3.11 or higher
 from enum import Enum, auto
 
 
@@ -16,7 +15,6 @@ class Internships(Enum):
 
 
 class Speciality(Enum):
-    # INVALID = auto(),
     COMPUTERS = auto(),
     SIGNALS = auto(),
     DEVICES = auto()
