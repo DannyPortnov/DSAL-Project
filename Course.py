@@ -40,7 +40,7 @@ class Course:
     # set the condition of the course: must or choise
     # TODO: check why constant doesn't work here
     def _set_condition(self, is_must: str) -> None:
-        if is_must == "חובה":
+        if is_must == REQUIRED_COURSE_INDICATOR:
             self._is_must = True
         self._is_must = False
 
