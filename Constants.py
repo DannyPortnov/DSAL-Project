@@ -55,5 +55,6 @@ MISSING_SPORT_POINTS_ERROR = "You haven't taken the correct amount of sport poin
 
 MISSING_GENERAL_POINTS_ERROR = "You haven't taken the correct amount of general points"
 
-INVALID_INTERSHIP_ERROR = "Invalid intership! You haven't taken both of the \
-    intership courses (couldn't determine amount of required credits)"
+# Parenthesis are used to split the long string into multiple lines
+INVALID_INTERSHIP_ERROR = ("Invalid intership! You haven't taken both of the"
+                           "intership courses (couldn't determine amount of required credits)")
