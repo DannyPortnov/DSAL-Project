@@ -75,11 +75,17 @@ class Course:
         return True, None
 
     # validate a course by checking it's points, name and number
-    def validate_course(self, number: int, points: float, name: str):
+    def validate_course(self, number: int, points: float, name: str) -> tuple[bool, str]:
         # if number == self._number and points == self._points and name == self._name:
-        if number == self._number and points == self._points:
-            return True
-        return False
+        if number != self._number:
+            return False, INVALID_COURSE_DATA_ERROR
+        if number == self._number and points == self._points and name == self._name:
+            return True, ""
+        points_mismatch = f"Points of course {number} don't match syllabus, expected {self._points} but got {points}\n"
+        name_mismatch = f"Name of course {number} doesn't match syllabus, expected {self._name} but got {name}\n"
+        result = points_mismatch if points != self._points else ""
+        result += name_mismatch if name != self._name else ""
+        return True, result
 
     def __str__(self):
         return f"{self._number}     {self._points}      {self._name}"

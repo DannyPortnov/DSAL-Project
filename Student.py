@@ -76,6 +76,7 @@ class Student:
         # TODO: print somewhen the invalid courses
         self._status: str = ""
         self._invalid_major_or_minor: bool = False
+        self._notifications: str = ""
         self.read_student_data()
 
     def set_name(self, name):
@@ -207,10 +208,12 @@ class Student:
                 except ValueError:
                     self._invalid_courses[course_number] = INVALID_COURSE_DATA_ERROR
                     continue
-                if course.validate_course(course_number, credit, name):
+                is_valid, message = course.validate_course(course_number, credit, name)
+                if is_valid:
                     self.add_course(course)
+                    self._notifications += message
                 else:
-                    self._invalid_courses[course] = INVALID_COURSE_DATA_ERROR
+                    self._invalid_courses[course] = message
 
     def _ignore_comments_and_empty_lines(self, file: TextIOWrapper) -> Generator[str, None, None]:
         for line in file:
@@ -728,6 +731,9 @@ class Student:
             if len(self._status) > 0:
                 result_file.write("\nInvalid Arguments:\n")
                 result_file.write(self._status)
+            if len(self._notifications) > 0:
+                result_file.write("\nNotifications:\n")
+                result_file.write(self._notifications)
 
 
 def extract_course_data_from_line(line: str) -> tuple[int, float, str]:
