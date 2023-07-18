@@ -26,18 +26,18 @@ class SyllabusDB:
         self._devices = SpecialityCoursesDB(Speciality.DEVICES)
 
         self._total_points = 160
-        self._mandatory_points: dict[Interships, int] = {
-            Interships.INDUSTRY: 129, Interships.RESEARCH: 124, Interships.PROJECT: 122}
-        self._major_points: dict[Interships, int] = {
-            Interships.INDUSTRY: 20, Interships.RESEARCH: 20, Interships.PROJECT: 20}
-        self._minor_points: dict[Interships, int] = {
-            Interships.INDUSTRY: 0, Interships.RESEARCH: 10, Interships.PROJECT: 10}
-        self._external_points: dict[Interships, int] = {
-            Interships.INDUSTRY: 11, Interships.RESEARCH: 6, Interships.PROJECT: 8}
-        self._must_courses: dict[CourseType, dict[Interships, int]] = {CourseType.MAJOR:  {Interships.INDUSTRY: 4,
-                                                                                           Interships.RESEARCH: 4, Interships.PROJECT: 4},
-                                                                       CourseType.MINOR:  {Interships.INDUSTRY: 0,
-                                                                                           Interships.RESEARCH: 3, Interships.PROJECT: 3}}
+        self._mandatory_points: dict[Internships, int] = {
+            Internships.INDUSTRY: 129, Internships.RESEARCH: 124, Internships.PROJECT: 122}
+        self._major_points: dict[Internships, int] = {
+            Internships.INDUSTRY: 20, Internships.RESEARCH: 20, Internships.PROJECT: 20}
+        self._minor_points: dict[Internships, int] = {
+            Internships.INDUSTRY: 0, Internships.RESEARCH: 10, Internships.PROJECT: 10}
+        self._external_points: dict[Internships, int] = {
+            Internships.INDUSTRY: 11, Internships.RESEARCH: 6, Internships.PROJECT: 8}
+        self._must_courses: dict[CourseType, dict[Internships, int]] = {CourseType.MAJOR:  {Internships.INDUSTRY: 4,
+                                                                                            Internships.RESEARCH: 4, Internships.PROJECT: 4},
+                                                                        CourseType.MINOR:  {Internships.INDUSTRY: 0,
+                                                                                            Internships.RESEARCH: 3, Internships.PROJECT: 3}}
         self._general_points = 6
         self._sport_points = 1
         self.create_db()  # automatically create the DB when the object is created
@@ -68,12 +68,12 @@ class SyllabusDB:
 
     # get the amount of points for each course type, regarding the type of project
 
-    def get_required_points(self, final_project: Interships):
+    def get_required_points(self, final_project: Internships):
         return self._mandatory_points[final_project], self._major_points[final_project], \
             self._minor_points[final_project], self._external_points[final_project]
 
     def get_total_required_courses(
-        self, final_project: Interships,
+        self, final_project: Internships,
         major_speciality: Speciality,
             minor_speciality: Speciality):
         major_tuple = self._get_required_courses_in_speciality(
@@ -83,7 +83,7 @@ class SyllabusDB:
         return (major_tuple, minor_tuple)
 
     def _get_required_courses_in_speciality(
-            self, final_project: Interships, speciality: Speciality, speciality_type: CourseType) -> tuple[int, int] | tuple[int]:
+            self, final_project: Internships, speciality: Speciality, speciality_type: CourseType) -> tuple[int, int] | tuple[int]:
         required_courses_amount = self._must_courses[speciality_type][final_project]
         if speciality == Speciality.COMPUTERS:
             required_courses = (required_courses_amount//2,
