@@ -175,6 +175,7 @@ class Student:
                 self.remove_from_courses(course, reason_if_not)
 
     def read_student_data(self) -> None:
+
         with open(self._file_name, "r", encoding="utf-8") as file:
             line = next(self._ignore_comments_and_empty_lines(file), None)
             self.set_name(extract_student_data_from_line(line))
