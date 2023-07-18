@@ -4,25 +4,19 @@ from Constants import *
 
 
 class Course:
-    "Course Object Implementation"
+    """ Class for courses """
 
-    # TODO: need to create str method to class course in order to print: number, points, name
-
-    # def __init__(self, number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course):
     def __init__(self, number: int, name: str, points: float, is_must: str,
                  pre_courses: list[int], parallel_course: Optional[int]):
         self._name: str = name.strip()
         self._number: int = number
         self._points: float = points
-        # is the course's condition must or choice
-        self._set_condition(is_must)  # Sets self._is_must
+        # is the course's mandoatory or choise
+        self._is_must = True if is_must == REQUIRED_COURSE_INDICATOR else False
         # hold the pre-courses that must be taken before this course
         self._pre_courses: dict[int, Course] = dict.fromkeys(pre_courses, None)
         self._parallel_course: tuple[Optional[int],
                                      Optional[Course]] = (parallel_course, None)
-        # self._set_pre_courses()
-        # self._specialties = self._set_specialties(computers, signals, devices)  # the specialties in which this course is available
-        # in order to check if a student took a course or not- default value is false
         self._was_taken = False
 
     def get_name(self) -> str:
@@ -36,13 +30,6 @@ class Course:
 
     def get_pre_courses(self) -> dict[int, Course]:
         return self._pre_courses
-
-    # set the condition of the course: must or choise
-    # TODO: check why constant doesn't work here
-    def _set_condition(self, is_must: str) -> None:
-        if is_must == REQUIRED_COURSE_INDICATOR:
-            self._is_must = True
-        self._is_must = False
 
     def set_was_taken(self, was_taken: bool) -> None:
         self._was_taken = was_taken
@@ -88,7 +75,17 @@ class Course:
 
     # validate a course by checking it's points, name and number
     def validate_course(self, number: int, points: float, name: str) -> tuple[bool, str]:
-        # if number == self._number and points == self._points and name == self._name:
+        """ Checks if the course's data is valid, if not returns a message with the data that doesn't match the syllabus.
+
+        Args:
+            number (`int`): Course's code. Has to be the same as in the syllabus.
+            points (`float`): Course's credit points. Doesn't have to be the same as in the syllabus.
+            name (`str`): Course's name. Doesn't have to be the same as in the syllabus.
+
+        Returns:
+            `tuple[bool, str]`: boolean value is `True` only if the course's code is valid, else `False`.
+            If the course's code is invalid, the second value is a message with the data that doesn't match the syllabus.
+        """
         if number != self._number:
             return False, INVALID_COURSE_DATA_ERROR
         if number == self._number and points == self._points and name == self._name:

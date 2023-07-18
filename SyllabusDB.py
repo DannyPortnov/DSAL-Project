@@ -56,7 +56,7 @@ class SyllabusDB:
     def get_total_points(self):
         return self._total_points
 
-    def get_sport_points(self):
+    def get_sport_points(self) -> int:
         return self._sport_points
 
     def get_speciality_by_name(self, speciality):

@@ -230,19 +230,23 @@ class Student:
   # TODO: maybe return a message and write it to the file: wether student is missing points or exceeding the limit
 
     def check_sport_points(self) -> Optional[str]:
-        if self._sport_points == self._syllabus_db.get_sport_points():
-            return True
-        return False
+        return self._sport_points == self._syllabus_db.get_sport_points()
 
     # updates the type of internship that the student chose
     def update_internship_type(self) -> str:
+        """Updates the type of internship that the student chose.
+
+        Returns:
+            `str`: An error message if the student didn't take the mandatory courses for any of the internship types.
+            Otherwise, an empty string.
+        """
         # Checks that the student took both of the final project mandatory courses
         for courses, internship_type in INTERNSHIP_COURSES.items():
             if all(course in self._mandatory_courses for course in courses):
                 self._internship_type = internship_type
                 break
         else:  # The else clause is executed only if the loop completes without encountering a break statement
-            return INVALID_INTERSHIP_ERROR
+            return INVALID_INTERNSHIP_ERROR
         self.update_required_data()
         if self._internship_type == Internships.INDUSTRY:
             del self._required_credits[CourseType.MINOR]
@@ -253,8 +257,11 @@ class Student:
         return ""
 
     def update_mandatory_points(self) -> str:
-        # for course in self._mandatory_courses.values():
-        #     self._credit_taken[CourseType.MANDATORY] += course.get_points()
+        """Updates the mandatory points that the student took.
+        Returns:
+            `str`: An error message if the student didn't take sport and/or general points.
+            Otherwise, an empty string.
+        """
         self._credits_taken[CourseType.MANDATORY] = sum(
             course.get_points() for course in self._mandatory_courses.values()) + self._sport_points + self._general_points
         message = ""
@@ -666,31 +673,16 @@ class Student:
         self._check_all_courses_were_finished_properly()
         self._status += self._get_invalid_courses()
         self._status += self.update_mandatory_points()
-        intership_message = self.update_internship_type()
-        self._status += intership_message
-        if intership_message is not None:
+        internship_message = self.update_internship_type()
+        self._status += internship_message
+        if internship_message is not None:
             return
         self.update_speciality_points()
         self._status += self._validate_must_courses()
         self._status += self.validate_credit()
-        # TODO: need to check if the amount of points matches the requirements
-        # if self._required_mandatory_points < self._mandatory_points:
-
-        # if self._needed_credit[CourseType.MAJOR] < self._credit_taken[CourseType.MAJOR]:
-
-        # if self._needed_credit[CourseType.MINOR] < self._credit_taken[CourseType.MINOR]:
-
-        # if self._required_external_points < self._credit_taken[CourseType.EXTERNAL]:
-        #         # count how many required speciality courses the student took
-        #         self._major_required_count = 0
-        #         self._required_count[SpecialityType.MINOR] = 0
-
-        #         # store the minimum number of required courses the student need to take in major and minor specialities
-        #         self._needed_required_courses[CourseType.MAJOR] = None
-        #         self._needed_required_courses[CourseType.MINOR] = None
 
     def generate_result_file(self) -> None:
-        """Generate a result file for the student."""
+        """Generates a result file for the student."""
         self.run_courses_check()
         status = "Approved" if len(self._status) == 0 else "Not approved"
         total_points = sum(self._credits_taken.values())
@@ -752,8 +744,6 @@ def test_reading_student():
     # syllabusDB = MagicMock()
     student = Student("student1.txt", syllabusDB)
     student.run_courses_check()
-
-    pass
 
 
 if __name__ == "__main__":
