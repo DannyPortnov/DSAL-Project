@@ -96,7 +96,11 @@ class Student:
 
     def set_minor(self, minor: str) -> None:
         # TODO: Find out if we need to check if the minor is valid
-        self._minor = Speciality[minor.upper()]
+        minor_from_file = minor.upper()
+        if minor_from_file == MINOR_NA_INDICATOR:
+            self._remove_minor_from_dictionaries()
+            return
+        self._minor = Speciality[minor_from_file]
         if self._minor == Speciality.COMPUTERS:
             self._spc_must_courses_taken[CourseType.MINOR] = {
                 ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
@@ -117,13 +121,17 @@ class Student:
         """
         if type(course) is SpecialityCourse:
             course_type_in_major = course.get_speciality_course_type(self._major)
-            course_type_in_minor = course.get_speciality_course_type(self._minor)
             self._speciality_courses[CourseType.MAJOR][course_type_in_major].append(
                 course)
-            self._speciality_courses[CourseType.MINOR][course_type_in_minor].append(
-                course)
-            if course_type_in_major == SpecialityCourseType.NA and course_type_in_minor == SpecialityCourseType.NA:
-                self._speciality_courses[CourseType.EXTERNAL].append(course)
+            if self._minor is not None:
+                course_type_in_minor = course.get_speciality_course_type(self._minor)
+                self._speciality_courses[CourseType.MINOR][course_type_in_minor].append(
+                    course)
+                if course_type_in_major == SpecialityCourseType.NA and course_type_in_minor == SpecialityCourseType.NA:
+                    self._speciality_courses[CourseType.EXTERNAL].append(course)
+            else:
+                if course_type_in_major == SpecialityCourseType.NA:
+                    self._speciality_courses[CourseType.EXTERNAL].append(course)
         else:
             self._mandatory_courses[course.get_number()] = course
         course.set_was_taken(True)
@@ -185,13 +193,17 @@ class Student:
             try:
                 self.set_major(major_name_from_file)
             except KeyError:
-                self._status += f"Major name: '{major_name_from_file}' is not valid, expected: {'/'.join([str(e.name) for e in Speciality])} (case insensitive)"
+                self._status += (f"Major name: '{major_name_from_file}' is not valid,"
+                                 f" expected: {'/'.join([str(e.name) for e in Speciality])}"
+                                 f" (case insensitive)")
             line = next(self._ignore_comments_and_empty_lines(file), None)
             minor_name_from_file = extract_student_data_from_line(line)
             try:
                 self.set_minor(minor_name_from_file)
             except KeyError:
-                self._status += f"Minor name: '{minor_name_from_file}' is not valid, expected: {'/'.join([str(e.name) for e in Speciality])} (case insensitive)"
+                self._status += (f"Minor name: '{minor_name_from_file}' is not valid, expected:"
+                                 f" {'/'.join([str(e.name) for e in Speciality])},"
+                                 f"{MINOR_NA_INDICATOR} (case insensitive)")
             line = next(self._ignore_comments_and_empty_lines(file), None)
             self.set_general_points(extract_student_data_from_line(line))
             line = next(self._ignore_comments_and_empty_lines(file), None)
@@ -239,13 +251,16 @@ class Student:
         else:  # The else clause is executed only if the loop completes without encountering a break statement
             return INVALID_INTERNSHIP_ERROR
         self.update_required_data()
-        if self._internship_type == Internships.INDUSTRY:
-            del self._required_credits[CourseType.MINOR]
-            # Remove minor speciality from the student's credit count
-            del self._credits_taken[CourseType.MINOR]
-            # Move all minor courses to major
-            del self._speciality_courses[CourseType.MINOR]
+        if self._internship_type == Internships.INDUSTRY and self._minor is not None:
+            self._remove_minor_from_dictionaries()
         return ""
+
+    def _remove_minor_from_dictionaries(self):
+        del self._required_credits[CourseType.MINOR]
+        # Remove minor speciality from the student's credit count
+        del self._credits_taken[CourseType.MINOR]
+        # Move all minor courses to major
+        del self._speciality_courses[CourseType.MINOR]
 
     def update_mandatory_points(self) -> str:
         """Updates the mandatory points that the student took.
@@ -689,7 +704,8 @@ class Student:
                 result_file.write(self._status)
                 return
             result_file.write("Major: " + self._major.name + "\n")
-            result_file.write("Minor: " + self._minor.name + "\n")
+            minor_name = MINOR_NA_INDICATOR if self._minor is None else self._minor.name
+            result_file.write("Minor: " + minor_name + "\n")
             if self._internship_type is not None:
                 result_file.write("Internship: " + self._internship_type.name + "\n")
             result_file.write("Total Points: " + str(total_points) + "\n")

@@ -21,4 +21,5 @@ if __name__ == "__main__":
     # run_program("minor computers.txt")
     # run_program("student with invalid internship.txt")
     # run_program("missing lots of parrallel and pre.txt")
-    run_program("missing 1 pre for speciality.txt")
+    # run_program("missing 1 pre for speciality.txt")
+    run_program("minor is NA.txt")
