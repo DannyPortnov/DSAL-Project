@@ -18,8 +18,8 @@ def run_program(file_name: str):
 
 
 if __name__ == "__main__":
-    run_program("student1.txt")  # valid student
+    # run_program("student1.txt")  # valid student
     # run_program("invalid major.txt")
     # run_program("Student with 2 specialties but missing 1 required in minor.txt")
-    # run_program("minor computers.txt")  # valid student
-    # run_program("student with invalid intership.txt")  # valid student
+    # run_program("minor computers.txt")
+    run_program("student with invalid intership.txt")

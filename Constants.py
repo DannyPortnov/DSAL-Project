@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 from enum import Enum, auto
 
 
-class Interships(Enum):
+class Internships(Enum):
     INDUSTRY = auto(),
     RESEARCH = auto(),
     PROJECT = auto()
@@ -41,6 +41,12 @@ class ComputersCourseType(str, Enum):
     TOTAL = auto()
 
 
+INTERNSHIP_COURSES: dict[tuple[int, int], Internships] = {
+    (31054, 31055): Internships.INDUSTRY,
+    (31052, 31053): Internships.RESEARCH,
+    (31050, 31051): Internships.PROJECT
+}
+
 REQUIRED_COURSE_INDICATOR = "חובה"
 
 OPTIONAL_COURSE_INDICATOR = "בחירה"
@@ -56,5 +62,5 @@ MISSING_SPORT_POINTS_ERROR = "You haven't taken the correct amount of sport poin
 MISSING_GENERAL_POINTS_ERROR = "You haven't taken the correct amount of general points"
 
 # Parenthesis are used to split the long string into multiple lines
-INVALID_INTERSHIP_ERROR = ("Invalid intership! You haven't taken both of the"
-                           "intership courses (couldn't determine amount of required credits)")
+INVALID_INTERSHIP_ERROR = ("Invalid intership! You haven't taken both of the "
+                           "final project courses (couldn't determine amount of required credits)")

@@ -24,7 +24,7 @@ class Student:
         self._sport_points: int = None
 
         # holds the type of internship that the student chose
-        self._internship_type: Optional[Interships] = None
+        self._internship_type: Optional[Internships] = None
 
         # store the minimum points in order to finish the degree
         self._required_credits: dict[CourseType, float] = {
@@ -236,26 +236,15 @@ class Student:
 
     # updates the type of internship that the student chose
     def update_internship_type(self) -> str:
-        # check if project is internship in the idustry
-        if (31054 in self._mandatory_courses) and (31055 in self._mandatory_courses):
-            # if self._internship_type is None:
-            self._internship_type = Interships.INDUSTRY
-
-        # check if project is research in the college
-        elif (31052 in self._mandatory_courses) and (31053 in self._mandatory_courses):
-            # check if the project type had already updated, if so- the student did not report the project courses correctly
-            # if self._internship_type is None:
-            self._internship_type = Interships.RESEARCH
-
-        # check if project is mini_project in the college
-        elif (31050 in self._mandatory_courses) and (31051 in self._mandatory_courses):
-            # check if the project type had already updated, if so- the student did not report the project courses correctly
-            # if self._internship_type is None:
-            self._internship_type = Interships.PROJECT
-        else:
+        # Checks that the student took both of the final project mandatory courses
+        for courses, internship_type in INTERNSHIP_COURSES.items():
+            if all(course in self._mandatory_courses for course in courses):
+                self._internship_type = internship_type
+                break
+        else:  # The else clause is executed only if the loop completes without encountering a break statement
             return INVALID_INTERSHIP_ERROR
         self.update_required_data()
-        if self._internship_type == Interships.INDUSTRY:
+        if self._internship_type == Internships.INDUSTRY:
             del self._required_credits[CourseType.MINOR]
             # Remove minor speciality from the student's credit count
             del self._credits_taken[CourseType.MINOR]
@@ -300,7 +289,7 @@ class Student:
         self.update_only_in_major_and_must_courses(
             self.get_intersecting_courses(major_course_type=SpecialityCourseType.REQUIRED,
                                           minor_course_type=SpecialityCourseType.NA))  # required in major
-        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
+        if self._internship_type == Internships.RESEARCH or self._internship_type == Internships.PROJECT:
             self.update_only_in_minor_and_must_courses(
                 self.get_intersecting_courses(minor_course_type=SpecialityCourseType.REQUIRED,
                                               major_course_type=SpecialityCourseType.NA))  # required in minor
@@ -321,7 +310,7 @@ class Student:
         self._update_speciality_optional_courses_only(
             self.get_intersecting_courses(major_course_type=SpecialityCourseType.OPTIONAL,
                                           minor_course_type=SpecialityCourseType.NA), CourseType.MAJOR)  # required in major
-        if self._internship_type == Interships.RESEARCH or self._internship_type == Interships.PROJECT:
+        if self._internship_type == Internships.RESEARCH or self._internship_type == Internships.PROJECT:
             self._update_speciality_optional_courses_only(
                 self.get_intersecting_courses(major_course_type=SpecialityCourseType.NA,
                                               minor_course_type=SpecialityCourseType.OPTIONAL), CourseType.MINOR)  # required in minor
