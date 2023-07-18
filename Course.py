@@ -65,8 +65,8 @@ class Course:
                 is_finished = False
                 message += self._format_missing_course_error(pre_course, "pre course")
         parallel_course = self.get_parallel_course()[1]
-        if parallel_course is not None:
-            is_finished = not parallel_course.get_was_taken() and is_finished
+        if parallel_course is not None and not parallel_course.get_was_taken():
+            is_finished = False
             message += self._format_missing_course_error(
                 parallel_course, "parallel course")
         # If disqualified, will change course to not taken

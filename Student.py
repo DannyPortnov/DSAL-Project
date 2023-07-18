@@ -666,7 +666,7 @@ class Student:
         self._status += self.update_mandatory_points()
         internship_message = self.update_internship_type()
         self._status += internship_message
-        if internship_message is not None:
+        if len(internship_message) != 0:
             return
         self.update_speciality_points()
         self._status += self._validate_must_courses()
