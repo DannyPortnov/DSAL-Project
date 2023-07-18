@@ -10,10 +10,9 @@ from itertools import cycle
 
 
 class Student:
-    "Student Object Implementation"
+    """ Class for students """
 
     def __init__(self, file_name: str, syllabus_db: SyllabusDB):
-        # def __init__(self, name, id, major, minor, general_points, sport_points):
         self._file_name = file_name
         self._syllabus_db = syllabus_db
         self._name: str = None
@@ -29,12 +28,7 @@ class Student:
         # store the minimum points in order to finish the degree
         self._required_credits: dict[CourseType, float] = {
             type: 0 for type in CourseType}
-        # self._required_mandatory_points: int = None
-        # self._required_major_points: int = None
-        # self._required_minor_points: int = None
-        # self._required_external_points: int = None
 
-        # TODO: maybe to change the way we store this data
         # store the required number of must courses the student need to take in major and minor specialities
         self._spc_must_courses_req: dict[CourseType, int |
                                          dict[ComputersCourseType, int]] = {
@@ -69,11 +63,8 @@ class Student:
         # Holds all the courses that were counted in the major or minor already
         self._shared_courses: list[SpecialityCourse] = []
 
-        # self._external_courses: list[SpecialityCourse] = []
-
         # key: course, value: why course is invalid
         self._invalid_courses: dict[Course | int, str] = {}
-        # TODO: print somewhen the invalid courses
         self._status: str = ""
         self._invalid_major_or_minor: bool = False
         self._notifications: str = ""
@@ -86,7 +77,6 @@ class Student:
         self._id = id
 
     def set_major(self, major: str) -> None:
-        # TODO: Find out if we need to check if the major is valid
         self._major = Speciality[major.upper()]
         if self._major == Speciality.COMPUTERS:
             self._spc_must_courses_taken[CourseType.MAJOR] = {
@@ -95,7 +85,6 @@ class Student:
                 ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
 
     def set_minor(self, minor: str) -> None:
-        # TODO: Find out if we need to check if the minor is valid
         minor_from_file = minor.upper()
         if minor_from_file == MINOR_NA_INDICATOR:
             self._remove_minor_from_dictionaries()
@@ -153,6 +142,10 @@ class Student:
             self._mandatory_courses.pop(course.get_number())
 
     def _remove_speciality_course(self, course: SpecialityCourse) -> None:
+        """ Removes a speciality course from the speciality courses dictionary.
+        Args:
+            course (`SpecialityCourse`): Course to remove
+        """
         for speciality_type in self._speciality_courses:
             for speciality in Speciality:
                 course_type_in_speciality = course.get_speciality_course_type(
@@ -183,7 +176,6 @@ class Student:
 
     def read_student_data(self) -> None:
         with open(self._file_name, "r", encoding="utf-8") as file:
-            # TODO: Put all of this in __init__ ?
             line = next(self._ignore_comments_and_empty_lines(file), None)
             self.set_name(extract_student_data_from_line(line))
             line = next(self._ignore_comments_and_empty_lines(file), None)
@@ -214,7 +206,6 @@ class Student:
             # When Generator depletes, next() returns None
             while (line := next(self._ignore_comments_and_empty_lines(file), None)) != None:
                 course_number, credit, name = extract_course_data_from_line(line)
-                # TODO: make prettier
                 try:
                     course = self._syllabus_db.get_course_by_number(course_number)
                 except ValueError:
@@ -341,19 +332,6 @@ class Student:
         # update points by using the courses that have left
         self.update_major_minor_shared_courses_points()
 
-    # method that updates the required course in computers speciality, with respect to it's kind: Hardware or Software
-    # def update_major_minor_computers_required_points(self, course, required_count):
-    #     is_hw_sw = course.check_if_hw_sw()
-    #     if is_hw_sw is not None:
-    #         required_count[is_hw_sw] += 1
-    #     else:
-    #         required_count += 1
-
-    # TODO: in each update major/minor/external course method, need to add:  else: self.add_invalid_course(...)
-    # this is for a situation when a course had not finished properly
-
-    #
-
     def update_only_in_major_and_must_courses(
             self, only_major_must: set[SpecialityCourse]) -> None:
         """ 
@@ -374,9 +352,6 @@ class Student:
                     if (is_hw_sw := course.check_if_hw_sw()) is not None:
                         self._spc_must_courses_taken[CourseType.MAJOR][is_hw_sw] += 1
                         self._spc_must_courses_taken[CourseType.MAJOR][ComputersCourseType.TOTAL] += 1
-                    # else:
-                    #     self._major_required_count += 1
-                    # # self.update_major_minor_computers_required_points(course, self._major_required_count)
                 else:
                     self._spc_must_courses_taken[CourseType.MAJOR] += 1
                 self._credits_taken[CourseType.MAJOR] += course.get_points()
@@ -397,9 +372,6 @@ class Student:
                     if (is_hw_sw := course.check_if_hw_sw()) is not None:
                         self._spc_must_courses_taken[CourseType.MINOR][is_hw_sw] += 1
                         self._spc_must_courses_taken[CourseType.MINOR][ComputersCourseType.TOTAL] += 1
-                    # else:
-                    #     self._required_count[SpecialityType.MINOR] += 1
-                    # self.update_major_minor_computers_required_points(course, self._required_count[SpecialityType.MINOR])
                 else:
                     self._spc_must_courses_taken[CourseType.MINOR] += 1
                 self._credits_taken[CourseType.MINOR] += course.get_points()
@@ -467,12 +439,10 @@ class Student:
     def update_major_must_minor_must_courses(
             self, major_must_minor_must_courses: set[SpecialityCourse]) -> None:
         for course in major_must_minor_must_courses:
-            # TODO: need to have another condition if it's computers speciality.
             if self._major == Speciality.COMPUTERS:
                 is_hw_sw = course.check_if_hw_sw()
                 # we need to assume that each computers' course name's indicate if it's HW or SW
                 if is_hw_sw is not None:
-                    # TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
                     # major doesn't have enough required courses, minor does have
                     if (self._spc_must_courses_taken[CourseType.MAJOR][is_hw_sw] <
                         self._spc_must_courses_req[CourseType.MAJOR][is_hw_sw]
@@ -494,9 +464,7 @@ class Student:
                 # we need to assume that each computers' course name's indicate if it's HW or SW
                 is_hw_sw = course.check_if_hw_sw()
                 if is_hw_sw is not None:
-                    # TODO: change the number to constant, computers need at least 1 HW and 1 SW courses if it's minor
                     # major doesn't have enough required courses, minor does have
-                    # TODO: NEED TO CHECK ALSO IF REACHED TO 3 MUST COURSES IN MINOR
                     if (self._spc_must_courses_taken[CourseType.MAJOR] <
                         self._spc_must_courses_req[CourseType.MAJOR]
                             and self._spc_must_courses_taken[CourseType.MINOR][is_hw_sw] >=
@@ -549,7 +517,6 @@ class Student:
     # update the points of external speciality by using the courses that are not available in major and minor
 
     def update_external_points(self) -> None:
-        # TODO: make prettier later :)
         for course in self._speciality_courses[CourseType.EXTERNAL]:
             self._credits_taken[CourseType.EXTERNAL] += course.get_points()
             self._remove_speciality_course(course)
@@ -574,7 +541,8 @@ class Student:
                                                              for _ in range(len(capacities))]
         capacities.sort()  # ascending order
         courses_that_didnt_fit: dict[SpecialityCourse,
-                                     None] = {}  # ONLY DICTIONARY WORKS HERE !!!
+                                     None] = {}  # We decided to use dictionary here because other data structures
+        # Had bugs that didn't allow us to add courses to them
         while len(course_items) != 0:
             current_course = course_items[-1]
             sacks_benefits: list[tuple[float, int]] = []
@@ -582,9 +550,6 @@ class Student:
                 benefit = round(capacities[sack_index] / current_course[1], 2)
                 sacks_benefits.append((benefit, sack_index))
             sacks_benefits.sort(key=lambda x: x[0], reverse=True)
-            # if best_benefit < benefit and best_sack_index not in current_course[2]:
-            #     best_benefit = benefit
-            #     best_sack_index = j
             for benefit, sack_index in sacks_benefits:
                 if current_course[1] <= capacities[sack_index]:
                     sacks[sack_index].append(current_course)
@@ -599,8 +564,7 @@ class Student:
         filtered_credits_taken = filter_credits_taken()
         for type, sack in zip(filtered_credits_taken, sacks):
             self._credits_taken[type] += sum(item[1] for item in sack)
-        filtered_credits_taken = filter_credits_taken()  # Continue checkings this
-
+        filtered_credits_taken = filter_credits_taken()
         # Check what happens if we have more than 1 type that doesn't have enough credits
         for type in cycle(filtered_credits_taken):
             if len(courses_that_didnt_fit) != 0:
@@ -623,17 +587,12 @@ class Student:
             else:
                 self._spc_must_courses_req[course_type] = course_count[0]
 
-    # check if student has enough mandatory points
-    # TODO: maybe change the parameters that this method returns
-
     def validate_credit(self) -> str:
         """ Checks if the student has enough credit of each type.
 
         Returns:
             bool: True if the student has enough credit of each type, False otherwise.
         """
-        # TODO: check this function
-        # TODO: maybe exclude mandatory points from this function
         messages: str = ""
         for credit_type, credit in self._required_credits.items():
             if self._credits_taken[credit_type] < credit:
@@ -654,7 +613,6 @@ class Student:
     def _validate_must_courses(self) -> str:
         """Check if the student took all the required must courses, in minor and major."""
         message = ""
-        # TODO: Fix in case computers is minor
         for course_type, required_must_courses in self._spc_must_courses_req.items():
             taken_must_courses_count = self._spc_must_courses_taken[course_type]
             if isinstance(required_must_courses, dict):  # Computers
@@ -693,7 +651,6 @@ class Student:
         status = "Approved" if len(self._status) == 0 else "Not approved"
         total_points = sum(self._credits_taken.values())
         specialization_points = total_points - self._credits_taken[CourseType.MANDATORY]
-        # TODO: after Specialization points, print the amount of points in each specialization
         file_name = self._name + "_" + self._id + "_output" + ".txt"
         with open(file_name, "w", encoding="utf-8") as result_file:
             result_file.write("Student name: " + self._name + "\n")

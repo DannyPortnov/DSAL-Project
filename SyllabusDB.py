@@ -17,11 +17,8 @@ class SyllabusDB:
     def __init__(self, file: str):
         self._file_name: str = file
         # key: course number, value: course object
-        self._mandatory_courses_list = []  # just for debug
-        self._speciality_courses_list = []  # just for debug
         self.all_courses: list[Course] = []
         self._mandatory_courses: dict[int, Course] = {}
-        # self._final_project_courses = dict()  # holds the type of final project that are available
         self._computers = SpecialityCoursesDB(Speciality.COMPUTERS)
         self._signals = SpecialityCoursesDB(Speciality.SIGNALS)
         self._devices = SpecialityCoursesDB(Speciality.DEVICES)
@@ -94,8 +91,6 @@ class SyllabusDB:
             required_courses = (required_courses_amount,)
         return required_courses
 
-    # TODO: update DB creation to ignore the lines with the symbol: #
-
     def create_db(self):
         f, line = self._open_db()
         while line:
@@ -112,13 +107,11 @@ class SyllabusDB:
                                     pre_courses=self.get_courses_codes(line[8:12]),
                                     parallel_course=self.get_course_code(line[12]))  # Assuming only 1 parallel course
                     self._mandatory_courses[course.get_number()] = course
-                    self._mandatory_courses_list.append(course)
                 else:
                     course = SpecialityCourse(
                         number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
                         computers=line[5], signals=line[6], devices=line[7],
                         pre_courses=self.get_courses_codes(line[8:12]))  # Assuming SpecialityCourse can't have parallel courses
-                    self._speciality_courses_list.append(course)
                     self._computers.add_course(course)
                     self._signals.add_course(course)
                     self._devices.add_course(course)
@@ -153,17 +146,6 @@ class SyllabusDB:
 
         raise ValueError(COURSE_NUMBER_NOT_FOUND_ERROR)
 
-    # # TODO: maybe change the list to another data structure
-
-# need to get the pre_courses objects by using the pre courses list of strings
-
-    def print_db(self):
-        for course in self._mandatory_courses_list:
-            print(f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, pre_courses_list={course._pre_courses}")
-        for course in self._speciality_courses_list:
-            print(
-                f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, computers={course._specialities[Speciality.COMPUTERS]}, signals={course._specialities[Speciality.SIGNALS]}, devices={course._specialities[Speciality.DEVICES]}, pre_courses_list={course._pre_courses}")
-
     def get_courses_codes(self, courses: list[str]) -> list[int]:
         """ Parses line of strings from the file to a list of courses codes
 
@@ -181,9 +163,3 @@ class SyllabusDB:
 
     def get_course_code(self, course: str) -> Optional[int]:
         return int(course) if course != '' else None
-
-
-if __name__ == "__main__":
-    file = "courses_fulllist.csv"
-    syllabus = SyllabusDB(file)
-    syllabus.print_db()

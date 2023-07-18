@@ -57,7 +57,6 @@ class Course:
     def is_finished_properly(self) -> tuple[bool, str]:
         """Checks if all the pre courses were taken, 
         this allows to determine if a course was finished properly"""
-        # courses = [course for C in self._pre_courses if not course.was_taken()]
         is_finished: bool = True
         message: str = ""
         for pre_course in self._pre_courses.values():
