@@ -211,12 +211,9 @@ class Student:
                 except ValueError:
                     self._invalid_courses[course_number] = INVALID_COURSE_DATA_ERROR
                     continue
-                is_valid, message = course.validate_course(course_number, credit, name)
-                if is_valid:
-                    self.add_course(course)
-                    self._notifications += message
-                else:
-                    self._invalid_courses[course] = message
+                message = course.validate_course(credit, name)
+                self.add_course(course)
+                self._notifications += message
 
     def _ignore_comments_and_empty_lines(self, file: TextIOWrapper) -> Generator[str, None, None]:
         for line in file:

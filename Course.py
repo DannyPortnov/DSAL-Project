@@ -73,27 +73,23 @@ class Course:
         return is_finished, message
 
     # validate a course by checking it's points, name and number
-    def validate_course(self, number: int, points: float, name: str) -> tuple[bool, str]:
-        """ Checks if the course's data is valid, if not returns a message with the data that doesn't match the syllabus.
+    def validate_course(self, points: float, name: str) -> str:
+        """ Checks if the course's data matches the syllabus.
 
         Args:
-            number (`int`): Course's code. Has to be the same as in the syllabus.
-            points (`float`): Course's credit points. Doesn't have to be the same as in the syllabus.
-            name (`str`): Course's name. Doesn't have to be the same as in the syllabus.
+            points (`float`): Course's credit points. 
+            name (`str`): Course's name. 
 
         Returns:
-            `tuple[bool, str]`: boolean value is `True` only if the course's code is valid, else `False`.
-            If the course's code is invalid, the second value is a message with the data that doesn't match the syllabus.
+            `str`: Message with the data that doesn't match the syllabus.
         """
-        if number != self._number:
-            return False, INVALID_COURSE_DATA_ERROR
-        if number == self._number and points == self._points and name == self._name:
-            return True, ""
-        points_mismatch = f"Points of course {number} don't match syllabus, expected {self._points} but got {points}\n"
-        name_mismatch = f"Name of course {number} doesn't match syllabus, expected {self._name} but got {name}\n"
+        if points == self._points and name == self._name:
+            return ""
+        points_mismatch = f"Points of course {self._number} don't match syllabus, expected {self._points} but got {points}\n"
+        name_mismatch = f"Name of course {self._number} doesn't match syllabus, expected {self._name} but got {name}\n"
         result = points_mismatch if points != self._points else ""
         result += name_mismatch if name != self._name else ""
-        return True, result
+        return result
 
     def __str__(self) -> str:
         return f"{self._number}     {self._points}      {self._name}"
