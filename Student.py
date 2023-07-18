@@ -562,7 +562,10 @@ class Student:
         for type, sack in zip(filtered_credits_taken, sacks):
             self._credits_taken[type] += sum(item[1] for item in sack)
         filtered_credits_taken = filter_credits_taken()
-        # Check what happens if we have more than 1 type that doesn't have enough credits
+        # If there are courses that didn't fit, but we have enough credit, still assign them
+        if len(filtered_credits_taken) == 0:
+            filtered_credits_taken = [
+                type for type in CourseType.__members__.values() if type != CourseType.MANDATORY]
         for type in cycle(filtered_credits_taken):
             if len(courses_that_didnt_fit) != 0:
                 self._credits_taken[type] += courses_that_didnt_fit.popitem()[0].get_points()
