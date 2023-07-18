@@ -126,7 +126,7 @@ class Student:
                 self._speciality_courses[CourseType.EXTERNAL].append(course)
         else:
             self._mandatory_courses[course.get_number()] = course
-        course.mark_as_taken()
+        course.set_was_taken(True)
 
     # add a course object to the stduent's dict of invlid courses
 
@@ -170,31 +170,31 @@ class Student:
                     self._all_courses[course.get_number()] = course
         for course in self._all_courses.values():
             is_finished, reason_if_not = course.is_finished_properly()
-            if not is_finished and reason_if_not is not None:
+            if not is_finished:
                 self.remove_from_courses(course, reason_if_not)
 
     def read_student_data(self) -> None:
         with open(self._file_name, "r", encoding="utf-8") as file:
             # TODO: Put all of this in __init__ ?
-            line = next(self._ignore_comments_and_empty_lines(file))
+            line = next(self._ignore_comments_and_empty_lines(file), None)
             self.set_name(extract_student_data_from_line(line))
-            line = next(self._ignore_comments_and_empty_lines(file))
+            line = next(self._ignore_comments_and_empty_lines(file), None)
             self.set_id(extract_student_data_from_line(line))
-            line = next(self._ignore_comments_and_empty_lines(file))
+            line = next(self._ignore_comments_and_empty_lines(file), None)
             major_name_from_file = extract_student_data_from_line(line)
             try:
                 self.set_major(major_name_from_file)
             except KeyError:
                 self._status += f"Major name: '{major_name_from_file}' is not valid, expected: {'/'.join([str(e.name) for e in Speciality])} (case insensitive)"
-            line = next(self._ignore_comments_and_empty_lines(file))
+            line = next(self._ignore_comments_and_empty_lines(file), None)
             minor_name_from_file = extract_student_data_from_line(line)
             try:
                 self.set_minor(minor_name_from_file)
             except KeyError:
                 self._status += f"Minor name: '{minor_name_from_file}' is not valid, expected: {'/'.join([str(e.name) for e in Speciality])} (case insensitive)"
-            line = next(self._ignore_comments_and_empty_lines(file))
+            line = next(self._ignore_comments_and_empty_lines(file), None)
             self.set_general_points(extract_student_data_from_line(line))
-            line = next(self._ignore_comments_and_empty_lines(file))
+            line = next(self._ignore_comments_and_empty_lines(file), None)
             self.set_sport_points(extract_student_data_from_line(line))
             if len(self._status) != 0:
                 self._invalid_major_or_minor = True
@@ -633,7 +633,9 @@ class Student:
         messages = ""
         if len(self._invalid_courses) > 0:
             for message in self._invalid_courses.values():
-                messages += message + "\n"
+                messages += message
+                if not message.endswith("\n"):
+                    messages += "\n"
         return messages
 
     def _validate_must_courses(self) -> str:

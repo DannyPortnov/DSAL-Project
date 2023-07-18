@@ -1,4 +1,5 @@
-from __future__ import annotations  # for self reference
+from __future__ import annotations
+from typing import Optional  # for self reference
 from Constants import *
 
 
@@ -9,14 +10,16 @@ class Course:
 
     # def __init__(self, number, points, name, is_must, computers, signals, devices, pre_courses_list, parallel_course):
     def __init__(self, number: int, name: str, points: float, is_must: str,
-                 pre_courses_list: list[int] | None):
+                 pre_courses: list[int], parallel_course: Optional[int]):
         self._name: str = name.strip()
         self._number = number
         self._points = points
         # is the course's condition must or choice
         self._set_condition(is_must)  # Sets self._is_must
         # hold the pre-courses that must be taken before this course
-        self._pre_courses: dict[int, Course] = dict.fromkeys(pre_courses_list, None)
+        self._pre_courses: dict[int, Course] = dict.fromkeys(pre_courses, None)
+        self._parallel_course: tuple[Optional[int],
+                                     Optional[Course]] = (parallel_course, None)
         # self._set_pre_courses()
         # self._specialties = self._set_specialties(computers, signals, devices)  # the specialties in which this course is available
         # in order to check if a student took a course or not- default value is false
@@ -25,11 +28,11 @@ class Course:
     def get_name(self):
         return self._name
 
-    # set a pre_course, key = pre_course's number
-    def set_pre_courses(self, courses: list[Course]):
-        if self._pre_courses is not None and len(self._pre_courses):
-            for course in self._pre_courses:
-                self._pre_courses.append(course)
+    def set_parallel_course(self, course: Course) -> None:
+        self._parallel_course = (self._parallel_course[0], course)
+
+    def get_parallel_course(self) -> tuple[Optional[int], Optional[Course]]:
+        return self._parallel_course
 
     def get_pre_courses(self) -> dict[int, Course]:
         return self._pre_courses
@@ -41,9 +44,8 @@ class Course:
             self._is_must = True
         self._is_must = False
 
-    def mark_as_taken(self):
-        """Mark the course as taken"""
-        self._was_taken = True
+    def set_was_taken(self, was_taken: bool):
+        self._was_taken = was_taken
 
     # returns the condition of a course: must or choise
     def is_mandatory(self):
@@ -61,18 +63,28 @@ class Course:
     def get_number(self):
         return self._number
 
-    def _format_pre_course_error(self, pre_course: Course):
-        """Returns a formatted error message for a pre course that hasn't been done"""
-        return f"You haven't done {self.get_name()}'s ({self.get_number()}) pre-course, {pre_course.get_name()} ({pre_course.get_number()})"
+    def _format_missing_course_error(self, missing_course: Course, missing_course_type: str) -> str:
+        return (f"You haven't done {self.get_name()}'s ({self.get_number()}) {missing_course_type},"
+                f" {missing_course.get_name()} ({missing_course.get_number()})\n")
 
-    def is_finished_properly(self) -> tuple[bool, str | None]:
+    def is_finished_properly(self) -> tuple[bool, str]:
         """Checks if all the pre courses were taken, 
         this allows to determine if a course was finished properly"""
         # courses = [course for C in self._pre_courses if not course.was_taken()]
+        is_finished: bool = True
+        message: str = ""
         for pre_course in self._pre_courses.values():
             if not pre_course.was_taken():
-                return False, self._format_pre_course_error(pre_course)
-        return True, None
+                is_finished = False
+                message += self._format_missing_course_error(pre_course, "pre course")
+        parallel_course = self.get_parallel_course()[1]
+        if parallel_course is not None:
+            is_finished = not parallel_course.was_taken() and is_finished
+            message += self._format_missing_course_error(
+                parallel_course, "parallel course")
+        # If disqualified, will change course to not taken
+        self.set_was_taken(is_finished)
+        return is_finished, message
 
     # validate a course by checking it's points, name and number
     def validate_course(self, number: int, points: float, name: str) -> tuple[bool, str]:

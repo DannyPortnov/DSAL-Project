@@ -8,9 +8,9 @@ class SpecialityCourse(Course):
     "Speciality Course Object Implementation"
 
     def __init__(self, number: int, name: str, points: float, is_must: str,
-                 computers, signals, devices, pre_courses_list: list[Course] | None) -> None:
+                 computers, signals, devices, pre_courses: list[int]) -> None:
 
-        super().__init__(number, name, points, is_must, pre_courses_list)
+        super().__init__(number, name, points, is_must, pre_courses, parallel_course=None)
         # the specialties in which this course is available
         self._specialities: dict[Speciality, SpecialityCourseType] = {}
         self._set_specialities(computers, signals, devices)

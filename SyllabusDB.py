@@ -1,5 +1,6 @@
 # from Course import Course
-from __future__ import annotations  # for self reference
+from __future__ import annotations
+from typing import Optional  # for self reference
 from SpecialityCourse import SpecialityCourse
 from SpecialityCoursesDB import SpecialityCoursesDB
 from Constants import *
@@ -110,14 +111,15 @@ class SyllabusDB:
                 # course = Course(number, name, points, is_must, computers, signals, devices, pre_courses_list, parallel_course)
                 if line[4] == REQUIRED_COURSE_INDICATOR:
                     course = Course(number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
-                                    pre_courses_list=self.get_pre_course_int(line[8:12]))
+                                    pre_courses=self.get_courses_codes(line[8:12]),
+                                    parallel_course=self.get_course_code(line[12]))  # Assuming only 1 parallel course
                     self._mandatory_courses[course.get_number()] = course
                     self._mandatory_courses_list.append(course)
                 else:
                     course = SpecialityCourse(
                         number=int(line[1]), name=line[3], points=float(line[2]), is_must=line[4],
                         computers=line[5], signals=line[6], devices=line[7],
-                        pre_courses_list=self.get_pre_course_int(line[8:12]))
+                        pre_courses=self.get_courses_codes(line[8:12]))  # Assuming SpecialityCourse can't have parallel courses
                     self._speciality_courses_list.append(course)
                     self._computers.add_course(course)
                     self._signals.add_course(course)
@@ -128,12 +130,14 @@ class SyllabusDB:
             pre_courses = course.get_pre_courses()
             for pre_course in pre_courses:
                 pre_courses[pre_course] = self.get_course_by_number(pre_course)
+            parallel_course_num = course.get_parallel_course()[0]
+            if parallel_course_num is not None:
+                course.set_parallel_course(
+                    self.get_course_by_number(parallel_course_num))
 
-    def get_course_by_number(self, number: int) -> Course | SpecialityCourse | None:
+    def get_course_by_number(self, number: int) -> Course | SpecialityCourse:
         """Returns a course object by its number. If the course is not found, raises a ValueError.
         If no number is specified in the syllabus, returns None"""
-        if number is None:  # TODO: maybe remove this
-            return None
 
         # if number == '':
         #     return None
@@ -181,9 +185,13 @@ class SyllabusDB:
             print(
                 f"number={course.get_number()}, points={course.get_points()}, name={course.get_name()}, is_must={course._is_must}, computers={course._specialities[Speciality.COMPUTERS]}, signals={course._specialities[Speciality.SIGNALS]}, devices={course._specialities[Speciality.DEVICES]}, pre_courses_list={course._pre_courses}")
 
-    def get_pre_course_int(self, pre_courses_list: list[str]) -> list[int]:
-        pre_courses: list[int] = []
-        for course_num in pre_courses_list:
+    def get_courses_codes(self, courses: list[str]) -> list[int]:
+        courses_codes: list[int] = []
+        for course_num in courses:
             if course_num != '':
-                pre_courses.append((int(course_num)))
-        return pre_courses
+                courses_codes.append((int(course_num)))
+        return courses_codes
+
+    def get_course_code(self, course: str) -> Optional[int]:
+        if course != '':
+            return int(course)
