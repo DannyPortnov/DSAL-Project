@@ -132,7 +132,7 @@ class SyllabusDB:
     def get_course_by_number(self, number: int) -> Course | SpecialityCourse | None:
         """Returns a course object by its number. If the course is not found, raises a ValueError.
         If no number is specified in the syllabus, returns None"""
-        if number is None:
+        if number is None:  # TODO: maybe remove this
             return None
 
         # if number == '':
