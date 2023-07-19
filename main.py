@@ -28,7 +28,7 @@ if __name__ == "__main__":
     else:
         print("The file does not have a .txt extension. Run the program again.")
 
-    # run_program("invalid major.txt")
+    # run_program("two_kind_of_internships.txt")
     # run_program("invalid major.txt")
     # run_program("Student with 2 specialties but missing 1 required in minor.txt")
     # run_program("minor computers.txt")
