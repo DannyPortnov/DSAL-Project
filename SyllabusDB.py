@@ -14,28 +14,22 @@ import re
 class SyllabusDB:
     "Syllabus Data base Object Implementation"
 
-    def __init__(self, file: str):
-        self._file_name: str = file
+    def __init__(self, file):
+        self._file_name = file
+        self.all_courses = []
         # key: course number, value: course object
-        self.all_courses: list[Course] = []
-        self._mandatory_courses: dict[int, Course] = {}
+        self._mandatory_courses = {}
         self._computers = SpecialityCoursesDB(Speciality.COMPUTERS)
         self._signals = SpecialityCoursesDB(Speciality.SIGNALS)
         self._devices = SpecialityCoursesDB(Speciality.DEVICES)
 
         self._total_points = 160
-        self._mandatory_points: dict[Internships, int] = {
-            Internships.INDUSTRY: 129, Internships.RESEARCH: 124, Internships.PROJECT: 122}
-        self._major_points: dict[Internships, int] = {
-            Internships.INDUSTRY: 20, Internships.RESEARCH: 20, Internships.PROJECT: 20}
-        self._minor_points: dict[Internships, int] = {
-            Internships.INDUSTRY: 0, Internships.RESEARCH: 10, Internships.PROJECT: 10}
-        self._external_points: dict[Internships, int] = {
-            Internships.INDUSTRY: 11, Internships.RESEARCH: 6, Internships.PROJECT: 8}
-        self._must_courses: dict[CourseType, dict[Internships, int]] = {CourseType.MAJOR:  {Internships.INDUSTRY: 4,
-                                                                                            Internships.RESEARCH: 4, Internships.PROJECT: 4},
-                                                                        CourseType.MINOR:  {Internships.INDUSTRY: 0,
-                                                                                            Internships.RESEARCH: 3, Internships.PROJECT: 3}}
+        self._mandatory_points = {Internships.INDUSTRY: 129, Internships.RESEARCH: 124, Internships.PROJECT: 122}
+        self._major_points = {Internships.INDUSTRY: 20, Internships.RESEARCH: 20, Internships.PROJECT: 20}
+        self._minor_points = {Internships.INDUSTRY: 0, Internships.RESEARCH: 10, Internships.PROJECT: 10}
+        self._external_points = {Internships.INDUSTRY: 11, Internships.RESEARCH: 6, Internships.PROJECT: 8}
+        self._must_courses = {CourseType.MAJOR:  {Internships.INDUSTRY: 4, Internships.RESEARCH: 4, Internships.PROJECT: 4},
+                            CourseType.MINOR:  {Internships.INDUSTRY: 0, Internships.RESEARCH: 3, Internships.PROJECT: 3}}
         self._general_points = 6
         self._sport_points = 1
         self.create_db()  # automatically create the DB when the object is created
@@ -53,7 +47,7 @@ class SyllabusDB:
     def get_total_points(self):
         return self._total_points
 
-    def get_sport_points(self) -> int:
+    def get_sport_points(self):
         return self._sport_points
 
     def get_speciality_by_name(self, speciality):
@@ -66,22 +60,16 @@ class SyllabusDB:
 
     # get the amount of points for each course type, regarding the type of project
 
-    def get_required_points(self, final_project: Internships):
+    def get_required_points(self, final_project):
         return self._mandatory_points[final_project], self._major_points[final_project], \
             self._minor_points[final_project], self._external_points[final_project]
 
-    def get_total_required_courses(
-        self, final_project: Internships,
-        major_speciality: Speciality,
-            minor_speciality: Speciality):
-        major_tuple = self._get_required_courses_in_speciality(
-            final_project, major_speciality, CourseType.MAJOR)
-        minor_tuple = self._get_required_courses_in_speciality(
-            final_project, minor_speciality, CourseType.MINOR)
+    def get_total_required_courses(self, final_project, major_speciality, minor_speciality):
+        major_tuple = self._get_required_courses_in_speciality(final_project, major_speciality, CourseType.MAJOR)
+        minor_tuple = self._get_required_courses_in_speciality(final_project, minor_speciality, CourseType.MINOR)
         return (major_tuple, minor_tuple)
 
-    def _get_required_courses_in_speciality(
-            self, final_project: Internships, speciality: Speciality, speciality_type: CourseType) -> tuple[int, int] | tuple[int]:
+    def _get_required_courses_in_speciality(self, final_project, speciality, speciality_type):
         required_courses_amount = self._must_courses[speciality_type][final_project]
         if speciality == Speciality.COMPUTERS:
             required_courses = (required_courses_amount//2,
@@ -126,7 +114,7 @@ class SyllabusDB:
                 course.set_parallel_course(
                     self.get_course_by_number(parallel_course_num))
 
-    def get_course_by_number(self, number: int) -> Course | SpecialityCourse:
+    def get_course_by_number(self, number):
         """Returns a course object by its number. If the course is not found, raises a ValueError."""
 
         if number in self._mandatory_courses.keys():
@@ -146,7 +134,7 @@ class SyllabusDB:
 
         raise ValueError(COURSE_NUMBER_NOT_FOUND_ERROR)
 
-    def get_courses_codes(self, courses: list[str]) -> list[int]:
+    def get_courses_codes(self, courses):
         """ Parses line of strings from the file to a list of courses codes
 
         Args:
@@ -155,11 +143,11 @@ class SyllabusDB:
         Returns:
             `list[int]`: Courses codes. If all the line cells are empty, returns an empty list.
         """
-        courses_codes: list[int] = []
+        courses_codes = []
         for course_num in courses:
             if course_num != '':
                 courses_codes.append((int(course_num)))
         return courses_codes
 
-    def get_course_code(self, course: str) -> Optional[int]:
+    def get_course_code(self, course):
         return int(course) if course != '' else None

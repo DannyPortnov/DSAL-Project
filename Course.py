@@ -6,59 +6,57 @@ from Constants import *
 class Course:
     """ Class for courses """
 
-    def __init__(self, number: int, name: str, points: float, is_must: str,
-                 pre_courses: list[int], parallel_course: Optional[int]):
-        self._name: str = name.strip()
-        self._number: int = number
-        self._points: float = points
+    def __init__(self, number, name, points, is_must, pre_courses, parallel_course):
+        self._name = name.strip()
+        self._number = number
+        self._points = points
         # is the course's mandoatory or choise
         self._is_must = True if is_must == REQUIRED_COURSE_INDICATOR else False
         # hold the pre-courses that must be taken before this course
-        self._pre_courses: dict[int, Course] = dict.fromkeys(pre_courses, None)
-        self._parallel_course: tuple[Optional[int],
-                                     Optional[Course]] = (parallel_course, None)
+        self._pre_courses = dict.fromkeys(pre_courses, None)
+        self._parallel_course = (parallel_course, None)
         self._was_taken = False
 
-    def get_name(self) -> str:
+    def get_name(self):
         return self._name
 
-    def set_parallel_course(self, course: Course) -> None:
+    def set_parallel_course(self, course):
         self._parallel_course = (self._parallel_course[0], course)
 
-    def get_parallel_course(self) -> tuple[Optional[int], Optional[Course]]:
+    def get_parallel_course(self):
         return self._parallel_course
 
-    def get_pre_courses(self) -> dict[int, Course]:
+    def get_pre_courses(self):
         return self._pre_courses
 
-    def set_was_taken(self, was_taken: bool) -> None:
+    def set_was_taken(self, was_taken):
         self._was_taken = was_taken
 
     # returns the condition of a course: must or choise
-    def is_mandatory(self) -> bool:
+    def is_mandatory(self):
         return self._is_must
 
-    def get_was_taken(self) -> bool:
+    def get_was_taken(self):
         """Returns True if the student took the course, False otherwise"""
         return self._was_taken
 
     # returns course's points
-    def get_points(self) -> float:
+    def get_points(self):
         return self._points
 
     # returns course's number
-    def get_number(self) -> int:
+    def get_number(self):
         return self._number
 
-    def _format_missing_course_error(self, missing_course: Course, missing_course_type: str) -> str:
+    def _format_missing_course_error(self, missing_course, missing_course_type):
         return (f"You haven't done {self.get_name()}'s ({self.get_number()}) {missing_course_type},"
                 f" {missing_course.get_name()} ({missing_course.get_number()})\n")
 
-    def is_finished_properly(self) -> tuple[bool, str]:
+    def is_finished_properly(self):
         """Checks if all the pre courses were taken, 
         this allows to determine if a course was finished properly"""
-        is_finished: bool = True
-        message: str = ""
+        is_finished = True
+        message = ""
         for pre_course in self._pre_courses.values():
             if not pre_course.get_was_taken():
                 is_finished = False
@@ -73,7 +71,7 @@ class Course:
         return is_finished, message
 
     # validate a course by checking it's points, name and number
-    def validate_course(self, points: float, name: str) -> str:
+    def validate_course(self, points, name):
         """ Checks if the course's data matches the syllabus.
 
         Args:
@@ -91,8 +89,8 @@ class Course:
         result += name_mismatch if name != self._name else ""
         return result
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self._number}     {self._points}      {self._name}"
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"{self._name}"

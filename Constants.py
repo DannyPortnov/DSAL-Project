@@ -39,7 +39,7 @@ class ComputersCourseType(str, Enum):
     TOTAL = auto()
 
 
-INTERNSHIP_COURSES: dict[tuple[int, int], Internships] = {
+INTERNSHIP_COURSES = {
     (31054, 31055): Internships.INDUSTRY,
     (31052, 31053): Internships.RESEARCH,
     (31050, 31051): Internships.PROJECT

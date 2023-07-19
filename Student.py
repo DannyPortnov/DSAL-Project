@@ -12,71 +12,56 @@ from itertools import cycle
 class Student:
     """ Class for students """
 
-    def __init__(self, file_name: str, syllabus_db: SyllabusDB):
+    def __init__(self, file_name, syllabus_db):
         self._file_name = file_name
         self._syllabus_db = syllabus_db
-        self._name: str = None
-        self._id: int = None
-        self._major: Optional[Speciality] = None
-        self._minor: Optional[Speciality] = None
-        self._general_points: int = None
-        self._sport_points: int = None
+        self._name = None
+        self._id = None
+        self._major = None
+        self._minor = None
+        self._general_points = None
+        self._sport_points = None
 
         # holds the type of internship that the student chose
-        self._internship_type: Optional[Internships] = None
+        self._internship_type = None
 
         # store the minimum points in order to finish the degree
-        self._required_credits: dict[CourseType, float] = {
-            type: 0 for type in CourseType}
+        self._required_credits = {type: 0 for type in CourseType}
 
         # store the required number of must courses the student need to take in major and minor specialities
-        self._spc_must_courses_req: dict[CourseType, int |
-                                         dict[ComputersCourseType, int]] = {
-            CourseType.MAJOR: 0,
-            CourseType.MINOR: 0
-        }
+        self._spc_must_courses_req = {CourseType.MAJOR: 0, CourseType.MINOR: 0}
 
         # calculate the amount of points the student got
-        self._credits_taken: dict[CourseType, float] = {type: 0 for type in CourseType}
+        self._credits_taken = {type: 0 for type in CourseType}
 
         # count how many must speciality courses the student took
-        self._spc_must_courses_taken: dict[CourseType, int |
-                                           dict[ComputersCourseType, int]] = {
-            CourseType.MAJOR: 0,
-            CourseType.MINOR: 0
-        }
+        self._spc_must_courses_taken = {CourseType.MAJOR: 0, CourseType.MINOR: 0}
 
         # key: course number, value: course object
-        self._mandatory_courses: dict[int, Course] = {}
+        self._mandatory_courses = {}
         # key: course number, value: course object
-        self._speciality_courses: dict[CourseType, list[SpecialityCourse] | dict[SpecialityCourseType, list[SpecialityCourse]]] = {
-            CourseType.MAJOR: {
-                type: [] for type in SpecialityCourseType
-            },
-            CourseType.MINOR: {
-                type: [] for type in SpecialityCourseType
-            },
-            CourseType.EXTERNAL: []
-        }
+        self._speciality_courses = {CourseType.MAJOR: {type: [] for type in SpecialityCourseType},
+                                    CourseType.MINOR: {type: [] for type in SpecialityCourseType},
+                                    CourseType.EXTERNAL: []}
 
-        self._all_courses: dict[int, Course | SpecialityCourse] = {}
+        self._all_courses = {}
         # Holds all the courses that were counted in the major or minor already
-        self._shared_courses: list[SpecialityCourse] = []
+        self._shared_courses = []
 
         # key: course, value: why course is invalid
-        self._invalid_courses: dict[Course | int, str] = {}
-        self._status: str = ""
-        self._invalid_major_or_minor: bool = False
-        self._notifications: str = ""
+        self._invalid_courses = {}
+        self._status = ""
+        self._invalid_major_or_minor = False
+        self._notifications = ""
         self.read_student_data()
 
     def set_name(self, name):
         self._name = name
 
-    def set_id(self, id: str):
+    def set_id(self, id):
         self._id = id
 
-    def set_major(self, major: str) -> None:
+    def set_major(self, major):
         self._major = Speciality[major.upper()]
         if self._major == Speciality.COMPUTERS:
             self._spc_must_courses_taken[CourseType.MAJOR] = {
@@ -84,7 +69,7 @@ class Student:
             self._spc_must_courses_req[CourseType.MAJOR] = {
                 ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
 
-    def set_minor(self, minor: str) -> None:
+    def set_minor(self, minor):
         minor_from_file = minor.upper()
         if minor_from_file == MINOR_NA_INDICATOR:
             self._remove_minor_from_dictionaries()
@@ -96,13 +81,13 @@ class Student:
             self._spc_must_courses_req[CourseType.MINOR] = {
                 ComputersCourseType.SW: 0, ComputersCourseType.HW: 0, ComputersCourseType.TOTAL: 0}
 
-    def set_general_points(self, general_points: str) -> None:
+    def set_general_points(self, general_points):
         self._general_points = int(general_points)
 
-    def set_sport_points(self, sport_points: str) -> None:
+    def set_sport_points(self, sport_points):
         self._sport_points = int(sport_points)
 
-    def add_course(self, course: Union[SpecialityCourse, Course]) -> None:
+    def add_course(self, course):
         """ Add a course to the student's taken courses.
 
         Args:
@@ -127,7 +112,7 @@ class Student:
 
     # add a course object to the stduent's dict of invlid courses
 
-    def remove_from_courses(self, course: Course, message: str):
+    def remove_from_courses(self, course, message):
         """Remove a course from the student's taken courses.
 
         Args:
@@ -141,7 +126,7 @@ class Student:
         else:  # is mandatory course
             self._mandatory_courses.pop(course.get_number())
 
-    def _remove_speciality_course(self, course: SpecialityCourse) -> None:
+    def _remove_speciality_course(self, course):
         """ Removes a speciality course from the speciality courses dictionary.
         Args:
             course (`SpecialityCourse`): Course to remove
@@ -157,7 +142,7 @@ class Student:
                 elif course in self._speciality_courses[speciality_type]:
                     self._speciality_courses[speciality_type].remove(course)
 
-    def _check_all_courses_were_finished_properly(self) -> None:
+    def _check_all_courses_were_finished_properly(self):
         """Ensure that all taken courses were finished properly.
         """
         self._all_courses = {**self._mandatory_courses}
@@ -174,7 +159,7 @@ class Student:
             if not is_finished:
                 self.remove_from_courses(course, reason_if_not)
 
-    def read_student_data(self) -> None:
+    def read_student_data(self):
 
         with open(self._file_name, "r", encoding="utf-8") as file:
             line = next(self._ignore_comments_and_empty_lines(file), None)
@@ -216,16 +201,16 @@ class Student:
                 self.add_course(course)
                 self._notifications += message
 
-    def _ignore_comments_and_empty_lines(self, file: TextIOWrapper) -> Generator[str, None, None]:
+    def _ignore_comments_and_empty_lines(self, file):
         for line in file:
             if not line.startswith("#") and line != '\n':
                 yield line.strip()
 
-    def check_sport_points(self) -> Optional[str]:
+    def check_sport_points(self):
         return self._sport_points == self._syllabus_db.get_sport_points()
 
     # updates the type of internship that the student chose
-    def update_internship_type(self) -> str:
+    def update_internship_type(self):
         """Updates the type of internship that the student chose.
 
         Returns:
@@ -251,7 +236,7 @@ class Student:
         # Move all minor courses to major
         del self._speciality_courses[CourseType.MINOR]
 
-    def update_mandatory_points(self) -> str:
+    def update_mandatory_points(self):
         """Updates the mandatory points that the student took.
         Returns:
             `str`: An error message if the student didn't take sport and/or general points.
@@ -266,8 +251,7 @@ class Student:
             message += MISSING_GENERAL_POINTS_ERROR
         return message
 
-    def get_intersecting_courses(self, minor_course_type: SpecialityCourseType,
-                                 major_course_type: SpecialityCourseType) -> set[SpecialityCourse]:
+    def get_intersecting_courses(self, minor_course_type, major_course_type):
         """
             Returns the common speciality courses between major and minor based on the specified types.
 
@@ -330,8 +314,7 @@ class Student:
         # update points by using the courses that have left
         self.update_major_minor_shared_courses_points()
 
-    def update_only_in_major_and_must_courses(
-            self, only_major_must: set[SpecialityCourse]) -> None:
+    def update_only_in_major_and_must_courses(self, only_major_must):
         """ 
             Update the points of the courses that are required in the major but not available in the minor.
             This method filters the speciality courses that are required only in the major speciality
@@ -362,7 +345,7 @@ class Student:
     # update the points of minor's Must courses by using the courses that are available in the minor only
 
     def update_only_in_minor_and_must_courses(
-            self, only_minor_must: set[SpecialityCourse]) -> None:
+            self, only_minor_must):
         for course in only_minor_must:
             if self._credits_taken[CourseType.MINOR] < self._required_credits[CourseType.MINOR]:
                 if self._minor == Speciality.COMPUTERS:
@@ -379,15 +362,12 @@ class Student:
                 self._credits_taken[CourseType.EXTERNAL] += course.get_points()
             self._remove_speciality_course(course)
 
-    def _update_must_credit_taken(
-        self, course_type: CourseType,
-            speciality: Speciality, courses: set[SpecialityCourse]) -> None:
+    def _update_must_credit_taken(self, course_type, speciality, courses):
         """
         Check if the student has taken enough required courses in the major.
         """
-        max_computers_additional_courses: int = 0
+        max_computers_additional_courses = 0
         for course in courses:
-
             if speciality == Speciality.COMPUTERS:
                 if course_type == CourseType.MINOR:
                     max_computers_additional_courses = 1
@@ -418,24 +398,19 @@ class Student:
 
     # update the major points if it doesn't have enough required courses
 
-    def update_major_must_minor_optional_courses(
-            self, major_must_minor_optional: set[SpecialityCourse]) -> None:
+    def update_major_must_minor_optional_courses(self, major_must_minor_optional):
         # major doesn't have enough required courses, and student didn't exceed amount of major points
-        self._update_must_credit_taken(
-            CourseType.MAJOR, self._major, major_must_minor_optional)
+        self._update_must_credit_taken(CourseType.MAJOR, self._major, major_must_minor_optional)
 
     # update the minor points if it doesn't have enough required courses
 
-    def update_minor_must_major_optional_courses(
-            self, minor_must_major_optional: set[SpecialityCourse]) -> None:
+    def update_minor_must_major_optional_courses(self, minor_must_major_optional):
         # minor doesn't have enough required courses, and student didn't exceed amount of minor points
-        self._update_must_credit_taken(
-            CourseType.MINOR, self._minor, minor_must_major_optional)
+        self._update_must_credit_taken(CourseType.MINOR, self._minor, minor_must_major_optional)
 
     # update major and minor points by checking if they have enough required courses.
 
-    def update_major_must_minor_must_courses(
-            self, major_must_minor_must_courses: set[SpecialityCourse]) -> None:
+    def update_major_must_minor_must_courses(self, major_must_minor_must_courses):
         for course in major_must_minor_must_courses:
             if self._major == Speciality.COMPUTERS:
                 is_hw_sw = course.check_if_hw_sw()
@@ -501,8 +476,7 @@ class Student:
                 else:
                     self._shared_courses.append(course)
 
-    def _update_speciality_optional_courses_only(
-            self, only_in_speciality_and_optional_courses: set[SpecialityCourse], course_type: CourseType) -> None:
+    def _update_speciality_optional_courses_only(self, only_in_speciality_and_optional_courses, course_type):
         for course in only_in_speciality_and_optional_courses:
             if self._credits_taken[course_type] < self._required_credits[course_type]:
                 self._credits_taken[course_type] += course.get_points()
@@ -514,36 +488,33 @@ class Student:
 
     # update the points of external speciality by using the courses that are not available in major and minor
 
-    def update_external_points(self) -> None:
+    def update_external_points(self):
         for course in self._speciality_courses[CourseType.EXTERNAL]:
             self._credits_taken[CourseType.EXTERNAL] += course.get_points()
             self._remove_speciality_course(course)
 
     # here we update points of major, minor and external specialities by using the rest of the courses that have left.
 
-    def update_major_minor_shared_courses_points(self) -> None:
+    def update_major_minor_shared_courses_points(self):
 
-        def filter_credits_taken() -> dict[CourseType, float]:
+        def filter_credits_taken():
             return {
                 type: self._credits_taken[type] for type in self._credits_taken if (
                     self._required_credits[type] > self._credits_taken[type])}
 
         if len(self._shared_courses) == 0:
             return
-        course_items: list[tuple[SpecialityCourse, float]] = [(course, course.get_points())
-                                                              for course in self._shared_courses]
+        course_items = [(course, course.get_points()) for course in self._shared_courses]
         capacities = [diff for type in self._required_credits if (
             diff := self._required_credits[type] - self._credits_taken[type]) > 0]
         # Create buckets only of credits that aren't satisfied
-        sacks: list[list[tuple[SpecialityCourse, float]]] = [[]
-                                                             for _ in range(len(capacities))]
+        sacks = [[] for _ in range(len(capacities))]
         capacities.sort()  # ascending order
-        courses_that_didnt_fit: dict[SpecialityCourse,
-                                     None] = {}  # We decided to use dictionary here because other data structures
-        # Had bugs that didn't allow us to add courses to them
+        courses_that_didnt_fit = {}  # We decided to use dictionary here because other data structures
+                                     # Had bugs that didn't allow us to add courses to them
         while len(course_items) != 0:
             current_course = course_items[-1]
-            sacks_benefits: list[tuple[float, int]] = []
+            sacks_benefits = []
             for sack_index, sack in enumerate(sacks):
                 benefit = round(capacities[sack_index] / current_course[1], 2)
                 sacks_benefits.append((benefit, sack_index))
@@ -565,18 +536,17 @@ class Student:
         filtered_credits_taken = filter_credits_taken()
         # If there are courses that didn't fit, but we have enough credit, still assign them
         if len(filtered_credits_taken) == 0:
-            filtered_credits_taken = [
-                type for type in CourseType.__members__.values() if type != CourseType.MANDATORY]
+            filtered_credits_taken = [type for type in CourseType.__members__.values() if type != CourseType.MANDATORY]
         for type in cycle(filtered_credits_taken):
             if len(courses_that_didnt_fit) != 0:
                 self._credits_taken[type] += courses_that_didnt_fit.popitem()[0].get_points()
             else:
                 break
 
-    def update_required_data(self) -> None:
-        required_points: tuple[int, int, int, int] = self._syllabus_db.get_required_points(
+    def update_required_data(self):
+        required_points = self._syllabus_db.get_required_points(
             self._internship_type)
-        required_courses_needed: tuple = self._syllabus_db.get_total_required_courses(
+        required_courses_needed = self._syllabus_db.get_total_required_courses(
             self._internship_type, self._major, self._minor)
         for credit_type, credit in zip(self._required_credits.keys(), required_points):
             self._required_credits[credit_type] = credit
@@ -588,13 +558,13 @@ class Student:
             else:
                 self._spc_must_courses_req[course_type] = course_count[0]
 
-    def validate_credit(self) -> str:
+    def validate_credit(self):
         """ Checks if the student has enough credit of each type.
 
         Returns:
             bool: True if the student has enough credit of each type, False otherwise.
         """
-        messages: str = ""
+        messages = ""
         for credit_type, credit in self._required_credits.items():
             if self._credits_taken[credit_type] < credit:
                 messages += f"You need to take {credit - self._credits_taken[credit_type]} more {credit_type.name.lower()} credit\n"
@@ -602,7 +572,7 @@ class Student:
 
     # check if the students is allowed to finish the degree
 
-    def _get_invalid_courses(self) -> str:
+    def _get_invalid_courses(self):
         messages = ""
         if len(self._invalid_courses) > 0:
             for message in self._invalid_courses.values():
@@ -611,7 +581,7 @@ class Student:
                     messages += "\n"
         return messages
 
-    def _validate_must_courses(self) -> str:
+    def _validate_must_courses(self):
         """Check if the student took all the required must courses, in minor and major."""
         message = ""
         for course_type, required_must_courses in self._spc_must_courses_req.items():
@@ -632,7 +602,7 @@ class Student:
                     message += f"You need to take {required_must_courses - taken_must_courses_count} more must {course_type.name.lower()} courses\n"
         return message
 
-    def run_courses_check(self) -> None:
+    def run_courses_check(self):
         if len(self._status) != 0:
             return
         self._check_all_courses_were_finished_properly()
@@ -646,7 +616,7 @@ class Student:
         self._status += self._validate_must_courses()
         self._status += self.validate_credit()
 
-    def generate_result_file(self) -> None:
+    def generate_result_file(self):
         """Generates a result file for the student."""
         self.run_courses_check()
         status = "Approved" if len(self._status) == 0 else "Not approved"
@@ -684,7 +654,7 @@ class Student:
                 result_file.write(self._notifications)
 
 
-def extract_course_data_from_line(line: str) -> tuple[int, float, str]:
+def extract_course_data_from_line(line):
     line = line.strip()  # Remove leading/trailing whitespaces
     # Use regex to extract the course number, credit, and name
     match = re.match(r'^(\d+)\s+([\d.]+)\s+(.+)$', line)
@@ -695,7 +665,7 @@ def extract_course_data_from_line(line: str) -> tuple[int, float, str]:
     return int(course_number), float(credit), name
 
 
-def extract_student_data_from_line(line: str):
+def extract_student_data_from_line(line):
     line = line.strip()  # Remove leading/trailing whitespaces
     # Use regex to extract the field name and its value while ignoring text after '#'
     match = re.match(r'([^:]+):\s*([^#]*)', line)
@@ -710,6 +680,3 @@ def test_reading_student():
     student = Student("student1.txt", syllabusDB)
     student.run_courses_check()
 
-
-if __name__ == "__main__":
-    test_reading_student()
