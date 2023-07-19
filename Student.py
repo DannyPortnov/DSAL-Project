@@ -217,13 +217,19 @@ class Student:
             `str`: An error message if the student didn't take the mandatory courses for any of the internship types.
             Otherwise, an empty string.
         """
-        # Checks that the student took both of the final project mandatory courses
+        completed_internship = False  # Variable to track if the student completed an internship
+        # Checks that the student took either of the final project mandatory courses
         for courses, internship_type in INTERNSHIP_COURSES.items():
             if all(course in self._mandatory_courses for course in courses):
+                if completed_internship:
+                    return INVALID_INTERNSHIP_AMOUNT_ERROR  # Student completed more than one internship, which is not allowed
                 self._internship_type = internship_type
-                break
-        else:  # The else clause is executed only if the loop completes without encountering a break statement
-            return INVALID_INTERNSHIP_ERROR
+                completed_internship = True
+
+        if not completed_internship:
+            return INVALID_INTERNSHIP_ERROR  # Student didn't complete any internship
+        
+    
         self.update_required_data()
         if self._internship_type == Internships.INDUSTRY and self._minor is not None:
             self._remove_minor_from_dictionaries()

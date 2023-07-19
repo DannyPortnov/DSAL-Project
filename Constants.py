@@ -63,4 +63,6 @@ MINOR_NA_INDICATOR = "NA"
 
 # Parenthesis are used to split the long string into multiple lines
 INVALID_INTERNSHIP_ERROR = ("Invalid internship! You haven't taken both of the "
-                            "final project courses (couldn't determine amount of required credits)")
+                            "final project courses (couldn't determine amount of required specialization credits)")
+INVALID_INTERNSHIP_AMOUNT_ERROR = ("Invalid internship! You took more than one type of "
+                            "final project courses (couldn't determine amount of required specialization credits)")
