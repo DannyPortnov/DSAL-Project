@@ -20,9 +20,9 @@ def is_txt_file(file_path):
 
 
 if __name__ == "__main__":
-    file_name = input("Please enter full name of student's file (with extension):\n")
+    file_name = input("\nPlease enter full name of student's file (with extension):\n")
     if is_txt_file(file_name):
         run_program(file_name) 
-        print("Done! Check your folder for the output file")
+        print("\nDone! Check your folder for the output file\n")
     else:
-        print("The file does not have a .txt extension. Run the program again.")
+        print("\nThe file does not have a .txt extension. Run the program again.\n")
