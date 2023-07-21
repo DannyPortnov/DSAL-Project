@@ -1,5 +1,3 @@
-from __future__ import annotations
-from typing import Optional  # for self reference
 from Constants import *
 
 

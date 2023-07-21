@@ -1,11 +1,7 @@
-# from Course import Course
-from __future__ import annotations
-from typing import Optional  # for self reference
+
 from SpecialityCourse import SpecialityCourse
 from SpecialityCoursesDB import SpecialityCoursesDB
 from Constants import *
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
 from Course import Course
 import re
 # -*- coding: utf-8 -*-

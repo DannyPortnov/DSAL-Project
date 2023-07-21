@@ -1,10 +1,6 @@
-from io import TextIOWrapper
-from typing import Generator, Optional, Union
 import re
-from Course import Course
 from SyllabusDB import SyllabusDB
 from Constants import *
-from unittest.mock import MagicMock
 from SpecialityCourse import SpecialityCourse
 from itertools import cycle
 

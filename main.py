@@ -23,16 +23,7 @@ def is_txt_file(file_path):
 if __name__ == "__main__":
     file_name = input("Please enter full name of student's file (with extension):\n")
     if is_txt_file(file_name):
-        run_program(file_name)  # valid student
+        run_program(file_name) 
         print("Done! Check your folder for the output file")
     else:
         print("The file does not have a .txt extension. Run the program again.")
-
-    # run_program("two_kind_of_internships.txt")
-    # run_program("invalid major.txt")
-    # run_program("Student with 2 specialties but missing 1 required in minor.txt")
-    # run_program("minor computers.txt")
-    # run_program("student with invalid internship.txt")
-    # run_program("missing lots of parrallel and pre.txt")
-    # run_program("missing 1 pre for speciality.txt")
-    # run_program("minor is NA.txt")

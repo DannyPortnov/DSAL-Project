@@ -1,10 +1,3 @@
-
-
-from __future__ import annotations  # for self reference
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from Course import Course
-
 from enum import Enum, auto
 
 
