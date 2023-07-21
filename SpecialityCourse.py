@@ -1,7 +1,5 @@
-from typing import Optional
 from Constants import *
 from Course import Course
-import re
 
 
 class SpecialityCourse(Course):
@@ -14,9 +12,6 @@ class SpecialityCourse(Course):
         # the specialties in which this course is available
         self._specialities = {}
         self._set_specialities(computers, signals, devices)
-        # self._computers = number_to_condition(computers)
-        # self._signals = number_to_condition(signals)
-        # self._devices = number_to_condition(devices)
 
     # set the specialties condition: key = name ; value = must, choice or none
     def _set_specialities(self, computers, signals, devices) -> None:

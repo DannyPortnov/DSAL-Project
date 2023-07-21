@@ -1,4 +1,3 @@
-import Course
 from Student import Student
 from SyllabusDB import SyllabusDB
 import os

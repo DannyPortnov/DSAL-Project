@@ -1,10 +1,8 @@
-
 from SpecialityCourse import SpecialityCourse
 from SpecialityCoursesDB import SpecialityCoursesDB
 from Constants import *
 from Course import Course
 import re
-# -*- coding: utf-8 -*-
 
 
 class SyllabusDB:

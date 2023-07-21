@@ -1,7 +1,4 @@
-from typing import Union
-from Course import Course
 from Constants import *
-from SpecialityCourse import SpecialityCourse
 
 
 class SpecialityCoursesDB:
